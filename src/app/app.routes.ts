@@ -1,3 +1,11 @@
 import { Routes } from '@angular/router';
+import { DataComponent } from './pages/data/data.component';
+import { AnalysisComponent } from './pages/analysis/analysis.component';
+import { MonitorComponent } from './pages/monitor/monitor.component';
 
-export const routes: Routes = [];
+export const appRoutes: Routes = [
+  { path: 'data', component: DataComponent },
+  { path: 'analysis', component: AnalysisComponent },
+  { path: 'monitor', component: MonitorComponent },
+  { path: '', redirectTo: 'data', pathMatch: 'full' }
+];
