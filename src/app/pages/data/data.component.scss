@@ -9,4 +9,16 @@ table {
 
 mat-card {
   padding: 16px;
+  margin-top: 16px;
+}
+
+.selected-row {
+  background-color: rgba(0, 150, 136, 0.2);
+}
+
+.details-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
 }
