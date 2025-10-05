@@ -1,12 +1,20 @@
-<mat-toolbar color="primary">
-  <button mat-raised-button color="accent" (click)="addTrainee()">
+<mat-toolbar color="accent">
+  <span style="margin-right: 8px;">Filter</span>
+  <mat-form-field appearance="outline" style="flex: 1; max-width: 300px;">
+    <input matInput (keyup)="applyFilter($event)" placeholder="Enter filter text (e.g., ID:123, >80, <70)">
+  </mat-form-field>
+
+  <span class="spacer"></span>
+
+  <button mat-raised-button color="primary" (click)="addTrainee()" style="margin-left: 10px;">
     <mat-icon>person_add</mat-icon>
     Add
   </button>
 
   <button mat-stroked-button color="warn"
           [disabled]="!selection.hasValue()"
-          (click)="removeSelectedTrainees()">
+          (click)="removeSelectedTrainees()"
+          style="margin-left: 5px;">
     <mat-icon>person_remove</mat-icon>
     Remove
   </button>
