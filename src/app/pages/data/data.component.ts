@@ -66,6 +66,13 @@ export class DataComponent implements OnInit, AfterViewInit {
     this.dataService.trainees$.subscribe(trainees => {
       this.dataSource.data = trainees;
     });
+
+    // Simple filter for now: match any field
+    this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
+      return Object.values(data).some(value =>
+        String(value).toLowerCase().includes(filter)
+      );
+    };
   }
 
   ngAfterViewInit(): void {
@@ -77,7 +84,6 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   addTrainee(): void {
-    console.log('Add button clicked ✅'); // debugging line
     const newTrainee = this.createEmptyTrainee();
     newTrainee.id = this.nextTempId--;
     this.isNewTrainee = true;
@@ -162,5 +168,10 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   todayDate(): string {
     return new Date().toISOString().split('T')[0];
+  }
+
+  applyFilter(event: Event): void {
+  const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
+  this.dataSource.filter = filterValue;
   }
 }
