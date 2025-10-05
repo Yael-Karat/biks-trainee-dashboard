@@ -6,24 +6,44 @@ import { Trainee } from '../models/trainee';
   providedIn: 'root'
 })
 export class DataService {
+  private STORAGE_KEY = 'trainees';
   private trainees: Trainee[] = [];
 
   private traineesSubject = new BehaviorSubject<Trainee[]>(this.trainees);
   trainees$ = this.traineesSubject.asObservable();
+
+  constructor() {
+    // Load from localStorage on init
+    const saved = localStorage.getItem(this.STORAGE_KEY);
+    if (saved) {
+      try {
+        this.trainees = JSON.parse(saved) as Trainee[];
+        this.traineesSubject.next(this.trainees);
+      } catch {
+        this.trainees = [];
+        this.saveToStorage();
+      }
+    }
+  }
+
+  private saveToStorage(): void {
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.trainees));
+  }
 
   getTrainees(): Trainee[] {
     return this.trainees;
   }
 
   addTrainee(newTrainee: Trainee): void {
-    // Add a shallow copy to avoid accidental shared references
     this.trainees.unshift({ ...newTrainee });
     this.traineesSubject.next(this.trainees);
+    this.saveToStorage();
   }
 
   removeTrainee(id: number): void {
     this.trainees = this.trainees.filter(t => t.id !== id);
     this.traineesSubject.next(this.trainees);
+    this.saveToStorage();
   }
 
   updateTrainee(updatedTrainee: Trainee): void {
@@ -32,8 +52,10 @@ export class DataService {
       this.trainees[index] = { ...updatedTrainee };
     } else {
       this.addTrainee(updatedTrainee);
+      return;
     }
     this.traineesSubject.next(this.trainees);
+    this.saveToStorage();
   }
 
   /**
@@ -46,7 +68,9 @@ export class DataService {
       this.trainees[index] = { ...updatedTrainee };
     } else {
       this.addTrainee(updatedTrainee);
+      return;
     }
     this.traineesSubject.next(this.trainees);
+    this.saveToStorage();
   }
 }
