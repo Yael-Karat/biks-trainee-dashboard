@@ -1,43 +1,152 @@
+<mat-toolbar color="primary">
+  <button mat-raised-button color="accent" (click)="addTrainee()">
+    <mat-icon>person_add</mat-icon>
+    Add
+  </button>
+
+  <button mat-stroked-button color="warn"
+          [disabled]="!selection.hasValue()"
+          (click)="removeSelectedTrainees()">
+    <mat-icon>person_remove</mat-icon>
+    Remove
+  </button>
+</mat-toolbar>
+
 <mat-card>
-  <mat-card-title> Trainee Test Results</mat-card-title>
+  <mat-card-title>Trainee Test Results</mat-card-title>
 
   <div class="table-container">
     <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
 
-      <!-- ID -->
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox
+            (change)="masterToggle()"
+            [checked]="isAllSelected()"
+            [indeterminate]="selection.hasValue() && !isAllSelected()"
+            aria-label="Select all rows">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+          <!-- stopPropagation prevents the checkbox click from triggering row click -->
+          <mat-checkbox
+            (click)="$event.stopPropagation()"
+            (change)="$event ? selection.toggle(row) : null"
+            [checked]="selection.isSelected(row)"
+            aria-label="Select row">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="id">
         <th mat-header-cell *matHeaderCellDef>ID</th>
         <td mat-cell *matCellDef="let element">{{ element.id }}</td>
       </ng-container>
 
-      <!-- Name -->
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>Name</th>
         <td mat-cell *matCellDef="let element">{{ element.name }}</td>
       </ng-container>
 
-      <!-- Subject -->
       <ng-container matColumnDef="subject">
         <th mat-header-cell *matHeaderCellDef>Subject</th>
         <td mat-cell *matCellDef="let element">{{ element.subject }}</td>
       </ng-container>
 
-      <!-- Grade -->
       <ng-container matColumnDef="grade">
         <th mat-header-cell *matHeaderCellDef>Grade</th>
         <td mat-cell *matCellDef="let element">{{ element.grade }}</td>
       </ng-container>
 
-      <!-- Date -->
       <ng-container matColumnDef="date">
         <th mat-header-cell *matHeaderCellDef>Date</th>
         <td mat-cell *matCellDef="let element">{{ element.date }}</td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+          (click)="selectTrainee(row)"
+          [class.selected-row]="selectedTrainee?.id === row.id || (isNewTrainee && currentTempId === row.id)">
+      </tr>
     </table>
 
     <mat-paginator [pageSizeOptions]="[5, 10]" showFirstLastButtons></mat-paginator>
   </div>
+</mat-card>
+
+<mat-card class="details-card" *ngIf="showDetails">
+  <mat-card-title>Details Panel</mat-card-title>
+
+  <form #traineeForm="ngForm" (ngSubmit)="saveTrainee(traineeForm)">
+    <div class="details-form">
+
+      <mat-form-field appearance="fill">
+        <mat-label>ID (Israeli ID, 9 digits)</mat-label>
+        <input matInput type="text"
+               [(ngModel)]="editingTrainee.id"
+               name="id"
+               required
+               appIsraeliId
+               placeholder="Enter ID"
+               #idInput="ngModel">
+        <mat-error *ngIf="idInput.errors?.['required'] && idInput.touched">
+          ID is required
+        </mat-error>
+        <mat-error *ngIf="idInput.errors?.['israeliId'] && idInput.touched">
+          Invalid Israeli ID (checksum failed)
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Name</mat-label>
+        <input matInput [(ngModel)]="editingTrainee.name" name="name"
+               required placeholder="Enter name" #nameInput="ngModel">
+        <mat-error *ngIf="nameInput.invalid && nameInput.touched">
+          Name is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Date</mat-label>
+        <input matInput type="date"
+               [(ngModel)]="editingTrainee.date"
+               name="date"
+               max="{{todayDate()}}"
+               required
+               placeholder="Select date"
+               title="Date"
+               #dateInput="ngModel">
+        <mat-error *ngIf="dateInput.invalid && dateInput.touched">
+          Date is required and must not be in the future
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Grade (0-100)</mat-label>
+        <input matInput type="number"
+               [(ngModel)]="editingTrainee.grade"
+               name="grade"
+               required min="0" max="100"
+               placeholder="Enter grade"
+               #gradeInput="ngModel">
+        <mat-error *ngIf="gradeInput.invalid && gradeInput.touched">
+          Grade must be between 0 and 100
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Subject</mat-label>
+        <input matInput [(ngModel)]="editingTrainee.subject" name="subject"
+               required placeholder="Enter subject" #subjectInput="ngModel">
+        <mat-error *ngIf="subjectInput.invalid && subjectInput.touched">
+          Subject is required
+        </mat-error>
+      </mat-form-field>
+
+      <div class="actions">
+        <button mat-raised-button color="primary" type="submit" [disabled]="!traineeForm.form.valid">Save</button>
+        <button mat-stroked-button color="warn" type="button" (click)="cancelEdit()">Cancel</button>
+      </div>
+    </div>
+  </form>
 </mat-card>
