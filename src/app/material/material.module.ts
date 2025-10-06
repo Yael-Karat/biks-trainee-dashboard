@@ -10,20 +10,24 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { MatSelectModule } from '@angular/material/select';
 
 @NgModule({
   imports: [
     CommonModule,
+    FormsModule,
     MatCardModule,
     MatTableModule,
     MatPaginatorModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,    
-    FormsModule,
+    MatFormFieldModule,
     MatToolbarModule,
     MatCheckboxModule,
+    DragDropModule,
+    MatSelectModule
   ],
   exports: [
     MatCardModule,
@@ -35,6 +39,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatIconModule,
     MatFormFieldModule,
     MatCheckboxModule,
+    DragDropModule,
+    MatSelectModule
   ]
 })
-export class MaterialModule { }
+export class MaterialModule {}
