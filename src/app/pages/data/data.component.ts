@@ -63,18 +63,56 @@ export class DataComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    this.dataService.trainees$.subscribe(trainees => {
-      this.dataSource.data = trainees;
-    });
+  this.dataService.trainees$.subscribe(trainees => {
+    this.dataSource.data = trainees;
+  });
 
-    // Simple filter for now: match any field
-    this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
-      return Object.values(data).some(value =>
-        String(value).toLowerCase().includes(filter)
+  this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
+  if (!filter) return true;
+
+  filter = filter.trim().toLowerCase();
+
+  // --- ID filter ---
+  if (filter.startsWith('id:')) {
+    const idValue = filter.replace('id:', '').trim();
+    return String(data.id).toLowerCase().includes(idValue);
+  }
+
+  // --- Grade or Date filter with > or < ---
+  if (filter.startsWith('>') || filter.startsWith('<')) {
+    const operator = filter[0];
+    const rawValue = filter.slice(1).trim();
+
+    // If contains "-" → treat as date
+    if (rawValue.includes('-')) {
+      const parsedDate = new Date(rawValue);
+      const traineeDate = new Date(data.date);
+
+      if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
+        return operator === '>'
+          ? traineeDate > parsedDate
+          : traineeDate < parsedDate;
+      }
+    }
+
+    // Otherwise → treat as grade
+    const numericValue = parseFloat(rawValue);
+    if (!isNaN(numericValue)) {
+      return operator === '>'
+        ? data.grade > numericValue
+        : data.grade < numericValue;
+    }
+
+    return true; // fallback
+  }
+
+  // --- General text search across all fields ---
+  return Object.values(data).some(v =>
+    String(v).toLowerCase().includes(filter)
       );
     };
   }
-
+  
   ngAfterViewInit(): void {
     if (this.paginator) this.dataSource.paginator = this.paginator;
   }
