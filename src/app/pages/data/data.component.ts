@@ -66,18 +66,9 @@ export class DataComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.dataService.trainees$.subscribe(trainees => {
       this.dataSource.data = trainees;
-
-      // Restore paginator state
-      const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
-      const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
-
-      if (this.paginator) {
-        if (savedIndex) this.paginator.pageIndex = +savedIndex;
-        if (savedSize) this.paginator.pageSize = +savedSize;
-      }
     });
 
-    // Filter predicate
+    // Filter predicate with support for >, <, =
     this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
       if (!filter) return true;
       filter = filter.trim().toLowerCase();
@@ -87,30 +78,39 @@ export class DataComponent implements OnInit, AfterViewInit {
         return String(data.id).toLowerCase().includes(idValue);
       }
 
-      if (filter.startsWith('>') || filter.startsWith('<')) {
-        const operator = filter[0];
-        const rawValue = filter.slice(1).trim();
+      // Operator support: >, <, =
+      const operatorMatch = filter.match(/^([><=])\s*(.+)$/);
+      if (operatorMatch) {
+        const operator = operatorMatch[1];
+        const rawValue = operatorMatch[2];
 
+        // Check if date
         if (rawValue.includes('-')) {
           const parsedDate = new Date(rawValue);
           const traineeDate = new Date(data.date);
-
           if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
-            return operator === '>'
-              ? traineeDate > parsedDate
-              : traineeDate < parsedDate;
+            switch (operator) {
+              case '>': return traineeDate > parsedDate;
+              case '<': return traineeDate < parsedDate;
+              case '=': return traineeDate.getTime() === parsedDate.getTime();
+            }
           }
         }
 
+        // Check if numeric (grade)
         const numericValue = parseFloat(rawValue);
         if (!isNaN(numericValue)) {
-          return operator === '>'
-            ? data.grade > numericValue
-            : data.grade < numericValue;
+          switch (operator) {
+            case '>': return data.grade > numericValue;
+            case '<': return data.grade < numericValue;
+            case '=': return data.grade === numericValue;
+          }
         }
+
         return true;
       }
 
+      // Default: search in all fields
       return Object.values(data).some(v =>
         String(v).toLowerCase().includes(filter)
       );
@@ -122,35 +122,28 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.filterValue = savedFilter;
       this.dataSource.filter = savedFilter.trim().toLowerCase();
     }
-
-    // Restore selection (optional: store last selected ID if needed)
   }
 
   ngAfterViewInit(): void {
-  this.dataSource.paginator = this.paginator;
+    this.dataSource.paginator = this.paginator;
 
-  // Restore paginator state from localStorage
-  const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
-  const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
+    // Restore paginator state from localStorage
+    const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
+    const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
 
-  if (savedSize) {
-    this.paginator.pageSize = +savedSize;
-  }
+    if (savedSize) this.paginator.pageSize = +savedSize;
+    if (savedIndex) this.paginator.pageIndex = +savedIndex;
 
-  if (savedIndex) {
-    this.paginator.pageIndex = +savedIndex;
-  }
+    // Force table to recalc page
+    this.dataSource._updateChangeSubscription();
 
-  // Force table to recalc page
-  this.dataSource._updateChangeSubscription();
+    // Save paginator state on change
+    this.paginator.page.subscribe((event: PageEvent) => {
+      localStorage.setItem(this.PAGINATOR_PAGE_KEY, event.pageIndex.toString());
+      localStorage.setItem(this.PAGINATOR_SIZE_KEY, event.pageSize.toString());
+    });
 
-  // Save paginator state on change
-  this.paginator.page.subscribe((event: PageEvent) => {
-    localStorage.setItem(this.PAGINATOR_PAGE_KEY, event.pageIndex.toString());
-    localStorage.setItem(this.PAGINATOR_SIZE_KEY, event.pageSize.toString());
-  });
-
-  this.cdr.detectChanges();
+    this.cdr.detectChanges();
   }
 
   createEmptyTrainee(): Trainee {
