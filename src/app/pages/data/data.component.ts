@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ChangeDetectorRef } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -39,6 +39,8 @@ import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directi
 })
 export class DataComponent implements OnInit, AfterViewInit {
   private readonly FILTER_STORAGE_KEY = 'traineeFilter';
+  private readonly PAGINATOR_PAGE_KEY = 'traineePageIndex';
+  private readonly PAGINATOR_SIZE_KEY = 'traineePageSize';
 
   displayedColumns: string[] = ['select', 'id', 'name', 'date', 'grade', 'subject'];
   dataSource = new MatTableDataSource<Trainee>();
@@ -64,8 +66,18 @@ export class DataComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.dataService.trainees$.subscribe(trainees => {
       this.dataSource.data = trainees;
+
+      // Restore paginator state
+      const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
+      const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
+
+      if (this.paginator) {
+        if (savedIndex) this.paginator.pageIndex = +savedIndex;
+        if (savedSize) this.paginator.pageSize = +savedSize;
+      }
     });
 
+    // Filter predicate
     this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
       if (!filter) return true;
       filter = filter.trim().toLowerCase();
@@ -104,16 +116,41 @@ export class DataComponent implements OnInit, AfterViewInit {
       );
     };
 
-    // Restore filter state from localStorage
+    // Restore filter state
     const savedFilter = localStorage.getItem(this.FILTER_STORAGE_KEY);
     if (savedFilter) {
       this.filterValue = savedFilter;
       this.dataSource.filter = savedFilter.trim().toLowerCase();
     }
+
+    // Restore selection (optional: store last selected ID if needed)
   }
 
   ngAfterViewInit(): void {
-    if (this.paginator) this.dataSource.paginator = this.paginator;
+  this.dataSource.paginator = this.paginator;
+
+  // Restore paginator state from localStorage
+  const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
+  const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
+
+  if (savedSize) {
+    this.paginator.pageSize = +savedSize;
+  }
+
+  if (savedIndex) {
+    this.paginator.pageIndex = +savedIndex;
+  }
+
+  // Force table to recalc page
+  this.dataSource._updateChangeSubscription();
+
+  // Save paginator state on change
+  this.paginator.page.subscribe((event: PageEvent) => {
+    localStorage.setItem(this.PAGINATOR_PAGE_KEY, event.pageIndex.toString());
+    localStorage.setItem(this.PAGINATOR_SIZE_KEY, event.pageSize.toString());
+  });
+
+  this.cdr.detectChanges();
   }
 
   createEmptyTrainee(): Trainee {
@@ -213,5 +250,11 @@ export class DataComponent implements OnInit, AfterViewInit {
 
     // Save filter to localStorage
     localStorage.setItem(this.FILTER_STORAGE_KEY, filterValue);
+
+    // Reset to first page when filter changes
+    if (this.paginator) {
+      this.paginator.firstPage();
+      localStorage.setItem(this.PAGINATOR_PAGE_KEY, '0');
+    }
   }
 }
