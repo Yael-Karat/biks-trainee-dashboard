@@ -1,7 +1,7 @@
 <mat-toolbar color="accent">
   <span style="margin-right: 8px;">Filter</span>
-  <mat-form-field appearance="outline" style="flex: 1; max-width: 300px;">
-    <input matInput (keyup)="applyFilter($event)" placeholder="Enter filter text (e.g., ID:123, >80, <70)">
+  <mat-form-field appearance="outline" style="flex: 1; max-width: 600px;">
+    <input matInput (keyup)="applyFilter($event)" placeholder="Enter filter text (e.g., ID: IsraeliId , >80, <yyy-mm-dd)">
   </mat-form-field>
 
   <span class="spacer"></span>
@@ -36,7 +36,6 @@
           </mat-checkbox>
         </th>
         <td mat-cell *matCellDef="let row">
-          <!-- stopPropagation prevents the checkbox click from triggering row click -->
           <mat-checkbox
             (click)="$event.stopPropagation()"
             (change)="$event ? selection.toggle(row) : null"
