@@ -1,1 +1,45 @@
-<p>analysis works!</p>
+<mat-toolbar color="primary">
+  <span>Analysis Page</span>
+</mat-toolbar>
+
+<div class="filters" style="margin: 16px; display: flex; gap: 16px;">
+  <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
+    <mat-label>Select Trainees</mat-label>
+    <mat-select [(value)]="selectedTrainees" multiple (selectionChange)="updateCharts()">
+      <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
+        {{trainee.name}} (ID: {{trainee.id}})
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
+    <mat-label>Select Subjects</mat-label>
+    <mat-select [(value)]="selectedSubjects" multiple (selectionChange)="updateCharts()">
+      <mat-option *ngFor="let subject of subjects" [value]="subject">{{subject}}</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div cdkDropListGroup>
+  <div class="charts-container" style="display: flex; gap: 16px; margin: 16px; flex-wrap: wrap;">
+    <div
+      *ngFor="let chart of charts; let i = index"
+      cdkDropList
+      [cdkDropListData]="charts"
+      (cdkDropListDropped)="drop($event)"
+      style="flex: 1 1 45%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa;"
+    >
+      <canvas
+        baseChart
+        [data]="chart.data"
+        [labels]="chart.labels"
+        [type]="chart.type"
+        [options]="chart.options"
+      ></canvas>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 16px; margin: 16px;">
+  <button mat-raised-button color="accent" (click)="swapHiddenChart()">Swap Hidden Chart</button>
+</div>
