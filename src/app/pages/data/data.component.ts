@@ -23,11 +23,8 @@ import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directi
   templateUrl: './data.component.html',
   styleUrls: ['./data.component.scss'],
   imports: [
-    // Required Angular primitives
     CommonModule,
     FormsModule,
-
-    // Angular Material modules (NgModules, not classes)
     MatTableModule,
     MatPaginatorModule,
     MatCheckboxModule,
@@ -37,12 +34,12 @@ import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directi
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-
-    // Standalone directive (must be standalone: true)
     IsraeliIdValidatorDirective
   ]
 })
 export class DataComponent implements OnInit, AfterViewInit {
+  private readonly FILTER_STORAGE_KEY = 'traineeFilter';
+
   displayedColumns: string[] = ['select', 'id', 'name', 'date', 'grade', 'subject'];
   dataSource = new MatTableDataSource<Trainee>();
   selection = new SelectionModel<Trainee>(true, []);
@@ -55,6 +52,8 @@ export class DataComponent implements OnInit, AfterViewInit {
   showDetails = false;
   isNewTrainee = false;
 
+  filterValue: string = '';
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(
@@ -63,56 +62,56 @@ export class DataComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-  this.dataService.trainees$.subscribe(trainees => {
-    this.dataSource.data = trainees;
-  });
+    this.dataService.trainees$.subscribe(trainees => {
+      this.dataSource.data = trainees;
+    });
 
-  this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
-  if (!filter) return true;
+    this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
+      if (!filter) return true;
+      filter = filter.trim().toLowerCase();
 
-  filter = filter.trim().toLowerCase();
-
-  // --- ID filter ---
-  if (filter.startsWith('id:')) {
-    const idValue = filter.replace('id:', '').trim();
-    return String(data.id).toLowerCase().includes(idValue);
-  }
-
-  // --- Grade or Date filter with > or < ---
-  if (filter.startsWith('>') || filter.startsWith('<')) {
-    const operator = filter[0];
-    const rawValue = filter.slice(1).trim();
-
-    // If contains "-" → treat as date
-    if (rawValue.includes('-')) {
-      const parsedDate = new Date(rawValue);
-      const traineeDate = new Date(data.date);
-
-      if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
-        return operator === '>'
-          ? traineeDate > parsedDate
-          : traineeDate < parsedDate;
+      if (filter.startsWith('id:')) {
+        const idValue = filter.replace('id:', '').trim();
+        return String(data.id).toLowerCase().includes(idValue);
       }
-    }
 
-    // Otherwise → treat as grade
-    const numericValue = parseFloat(rawValue);
-    if (!isNaN(numericValue)) {
-      return operator === '>'
-        ? data.grade > numericValue
-        : data.grade < numericValue;
-    }
+      if (filter.startsWith('>') || filter.startsWith('<')) {
+        const operator = filter[0];
+        const rawValue = filter.slice(1).trim();
 
-    return true; // fallback
-  }
+        if (rawValue.includes('-')) {
+          const parsedDate = new Date(rawValue);
+          const traineeDate = new Date(data.date);
 
-  // --- General text search across all fields ---
-  return Object.values(data).some(v =>
-    String(v).toLowerCase().includes(filter)
+          if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
+            return operator === '>'
+              ? traineeDate > parsedDate
+              : traineeDate < parsedDate;
+          }
+        }
+
+        const numericValue = parseFloat(rawValue);
+        if (!isNaN(numericValue)) {
+          return operator === '>'
+            ? data.grade > numericValue
+            : data.grade < numericValue;
+        }
+        return true;
+      }
+
+      return Object.values(data).some(v =>
+        String(v).toLowerCase().includes(filter)
       );
     };
+
+    // Restore filter state from localStorage
+    const savedFilter = localStorage.getItem(this.FILTER_STORAGE_KEY);
+    if (savedFilter) {
+      this.filterValue = savedFilter;
+      this.dataSource.filter = savedFilter.trim().toLowerCase();
+    }
   }
-  
+
   ngAfterViewInit(): void {
     if (this.paginator) this.dataSource.paginator = this.paginator;
   }
@@ -191,7 +190,6 @@ export class DataComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
-  // selection helpers
   isAllSelected(): boolean {
     const numSelected = this.selection.selected.length;
     const numRows = this.dataSource.data.length;
@@ -209,7 +207,11 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   applyFilter(event: Event): void {
-  const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
-  this.dataSource.filter = filterValue;
+    const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    this.filterValue = filterValue;
+    this.dataSource.filter = filterValue;
+
+    // Save filter to localStorage
+    localStorage.setItem(this.FILTER_STORAGE_KEY, filterValue);
   }
 }
