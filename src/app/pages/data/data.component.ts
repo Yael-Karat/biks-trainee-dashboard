@@ -68,32 +68,39 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.dataSource.data = trainees;
     });
 
-    // Integrated filter predicate with support for multiple filters and operators >, <, =
+    // Integrated filter predicate with support for multiple filters, column-specific filters, and operators
     this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
       if (!filter) return true;
 
-      // Split multiple filters separated by comma
       const filters = filter.split(',').map(f => f.trim().toLowerCase());
 
       return filters.every(f => {
         if (!f) return true;
 
-        // id filter
-        if (f.startsWith('id:')) {
-          const idValue = f.replace('id:', '').trim();
-          return String(data.id).toLowerCase().includes(idValue);
-        }
+        // Column-specific filter: column:operatorValue
+        const colMatch = f.match(/^(\w+):\s*([><=]?)(.+)$/);
+        if (colMatch) {
+          const col = colMatch[1];
+          const operator = colMatch[2] || '=';
+          const rawValue = colMatch[3].trim();
 
-        // Operator support: >, <, =
-        const operatorMatch = f.match(/^([><=])\s*(.+)$/);
-        if (operatorMatch) {
-          const operator = operatorMatch[1];
-          const rawValue = operatorMatch[2];
+          const value = (data as any)[col];
+          if (value === undefined) return false;
 
-          // Check if date
-          if (rawValue.includes('-')) {
+          // Numeric comparison (grade)
+          const numericValue = parseFloat(rawValue);
+          if (!isNaN(numericValue) && typeof value === 'number') {
+            switch (operator) {
+              case '>': return value > numericValue;
+              case '<': return value < numericValue;
+              case '=': return value === numericValue;
+            }
+          }
+
+          // Date comparison
+          if (rawValue.includes('-') && typeof value === 'string') {
             const parsedDate = new Date(rawValue);
-            const traineeDate = new Date(data.date);
+            const traineeDate = new Date(value);
             if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
               switch (operator) {
                 case '>': return traineeDate > parsedDate;
@@ -103,20 +110,39 @@ export class DataComponent implements OnInit, AfterViewInit {
             }
           }
 
-          // Check if numeric (grade)
-          const numericValue = parseFloat(rawValue);
-          if (!isNaN(numericValue)) {
-            switch (operator) {
-              case '>': return data.grade > numericValue;
-              case '<': return data.grade < numericValue;
-              case '=': return data.grade === numericValue;
+          // Text matching (exact or contains)
+          return String(value).toLowerCase().includes(rawValue);
+        }
+
+        // Global operator without column: >, <, =
+        const opMatch = f.match(/^([><=])\s*(.+)$/);
+        if (opMatch) {
+          const operator = opMatch[1];
+          const rawValue = opMatch[2];
+
+          // Grade numeric comparison
+          const num = parseFloat(rawValue);
+          if (!isNaN(num)) {
+            return operator === '>' ? data.grade > num :
+                   operator === '<' ? data.grade < num :
+                   data.grade === num;
+          }
+
+          // Date comparison
+          if (rawValue.includes('-')) {
+            const parsedDate = new Date(rawValue);
+            const traineeDate = new Date(data.date);
+            if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
+              return operator === '>' ? traineeDate > parsedDate :
+                     operator === '<' ? traineeDate < parsedDate :
+                     traineeDate.getTime() === parsedDate.getTime();
             }
           }
 
           return true;
         }
 
-        // Default: search in all fields
+        // Default global text search
         return Object.values(data).some(v =>
           String(v).toLowerCase().includes(f)
         );
@@ -134,17 +160,13 @@ export class DataComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
 
-    // Restore paginator state from localStorage
     const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
     const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
-
     if (savedSize) this.paginator.pageSize = +savedSize;
     if (savedIndex) this.paginator.pageIndex = +savedIndex;
 
-    // Force table to recalc page
     this.dataSource._updateChangeSubscription();
 
-    // Save paginator state on change
     this.paginator.page.subscribe((event: PageEvent) => {
       localStorage.setItem(this.PAGINATOR_PAGE_KEY, event.pageIndex.toString());
       localStorage.setItem(this.PAGINATOR_SIZE_KEY, event.pageSize.toString());
@@ -179,7 +201,6 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   saveTrainee(form: NgForm): void {
     if (!form.valid) return;
-
     this.editingTrainee.grade = Math.min(Math.max(this.editingTrainee.grade, 0), 100);
 
     if (this.isNewTrainee && this.currentTempId != null) {
@@ -197,7 +218,6 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.dataService.removeTrainee(this.currentTempId);
       this.currentTempId = null;
     }
-
     this.showDetails = false;
     this.isNewTrainee = false;
     this.selectedTrainee = null;
@@ -217,7 +237,6 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.selectedTrainee = null;
       this.showDetails = false;
     }
-
     if (this.currentTempId != null && removedIds.has(this.currentTempId)) {
       this.currentTempId = null;
       this.showDetails = false;
@@ -247,11 +266,8 @@ export class DataComponent implements OnInit, AfterViewInit {
     const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
     this.filterValue = filterValue;
     this.dataSource.filter = filterValue;
-
-    // Save filter to localStorage
     localStorage.setItem(this.FILTER_STORAGE_KEY, filterValue);
 
-    // Reset to first page when filter changes
     if (this.paginator) {
       this.paginator.firstPage();
       localStorage.setItem(this.PAGINATOR_PAGE_KEY, '0');
