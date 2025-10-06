@@ -68,52 +68,59 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.dataSource.data = trainees;
     });
 
-    // Filter predicate with support for >, <, =
+    // Integrated filter predicate with support for multiple filters and operators >, <, =
     this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
       if (!filter) return true;
-      filter = filter.trim().toLowerCase();
 
-      if (filter.startsWith('id:')) {
-        const idValue = filter.replace('id:', '').trim();
-        return String(data.id).toLowerCase().includes(idValue);
-      }
+      // Split multiple filters separated by comma
+      const filters = filter.split(',').map(f => f.trim().toLowerCase());
 
-      // Operator support: >, <, =
-      const operatorMatch = filter.match(/^([><=])\s*(.+)$/);
-      if (operatorMatch) {
-        const operator = operatorMatch[1];
-        const rawValue = operatorMatch[2];
+      return filters.every(f => {
+        if (!f) return true;
 
-        // Check if date
-        if (rawValue.includes('-')) {
-          const parsedDate = new Date(rawValue);
-          const traineeDate = new Date(data.date);
-          if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
-            switch (operator) {
-              case '>': return traineeDate > parsedDate;
-              case '<': return traineeDate < parsedDate;
-              case '=': return traineeDate.getTime() === parsedDate.getTime();
+        // id filter
+        if (f.startsWith('id:')) {
+          const idValue = f.replace('id:', '').trim();
+          return String(data.id).toLowerCase().includes(idValue);
+        }
+
+        // Operator support: >, <, =
+        const operatorMatch = f.match(/^([><=])\s*(.+)$/);
+        if (operatorMatch) {
+          const operator = operatorMatch[1];
+          const rawValue = operatorMatch[2];
+
+          // Check if date
+          if (rawValue.includes('-')) {
+            const parsedDate = new Date(rawValue);
+            const traineeDate = new Date(data.date);
+            if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
+              switch (operator) {
+                case '>': return traineeDate > parsedDate;
+                case '<': return traineeDate < parsedDate;
+                case '=': return traineeDate.getTime() === parsedDate.getTime();
+              }
             }
           }
-        }
 
-        // Check if numeric (grade)
-        const numericValue = parseFloat(rawValue);
-        if (!isNaN(numericValue)) {
-          switch (operator) {
-            case '>': return data.grade > numericValue;
-            case '<': return data.grade < numericValue;
-            case '=': return data.grade === numericValue;
+          // Check if numeric (grade)
+          const numericValue = parseFloat(rawValue);
+          if (!isNaN(numericValue)) {
+            switch (operator) {
+              case '>': return data.grade > numericValue;
+              case '<': return data.grade < numericValue;
+              case '=': return data.grade === numericValue;
+            }
           }
+
+          return true;
         }
 
-        return true;
-      }
-
-      // Default: search in all fields
-      return Object.values(data).some(v =>
-        String(v).toLowerCase().includes(filter)
-      );
+        // Default: search in all fields
+        return Object.values(data).some(v =>
+          String(v).toLowerCase().includes(f)
+        );
+      });
     };
 
     // Restore filter state
