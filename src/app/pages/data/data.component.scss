@@ -26,3 +26,10 @@ mat-card {
   gap: 16px;
   margin-top: 16px;
 }
+
+button[mat-icon-button] {
+  transition: transform 0.2s;
+}
+button[mat-icon-button]:hover {
+  transform: scale(1.1);
+}
