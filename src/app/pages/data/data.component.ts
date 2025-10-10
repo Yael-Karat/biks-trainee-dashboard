@@ -42,12 +42,11 @@ export class DataComponent implements OnInit, AfterViewInit {
   private readonly PAGINATOR_PAGE_KEY = 'traineePageIndex';
   private readonly PAGINATOR_SIZE_KEY = 'traineePageSize';
 
-  displayedColumns: string[] = ['select', 'id', 'name', 'date', 'grade', 'subject'];
+  displayedColumns: string[] = ['select', 'actions', 'id', 'name', 'date', 'grade', 'subject'];
   dataSource = new MatTableDataSource<Trainee>();
   selection = new SelectionModel<Trainee>(true, []);
 
   nextTempId = -1;
-  currentTempId: number | null = null;
 
   selectedTrainee: Trainee | null = null;
   editingTrainee: Trainee = this.createEmptyTrainee();
@@ -56,100 +55,23 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   filterValue: string = '';
 
+  currentTempRow: Trainee | null = null; // <-- track the exact new row object
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(
-    private dataService: DataService,
-    private cdr: ChangeDetectorRef
-  ) {}
+  constructor(private dataService: DataService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.dataService.trainees$.subscribe(trainees => {
-      this.dataSource.data = trainees;
-    });
+    this.dataService.trainees$.subscribe(trainees => this.dataSource.data = trainees);
 
-    // Integrated filter predicate with support for multiple filters, column-specific filters, and operators
+    // Filter predicate
     this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
       if (!filter) return true;
-
       const filters = filter.split(',').map(f => f.trim().toLowerCase());
-
-      return filters.every(f => {
-        if (!f) return true;
-
-        // Column-specific filter: column:operatorValue
-        const colMatch = f.match(/^(\w+):\s*([><=]?)(.+)$/);
-        if (colMatch) {
-          const col = colMatch[1];
-          const operator = colMatch[2] || '=';
-          const rawValue = colMatch[3].trim();
-
-          const value = (data as any)[col];
-          if (value === undefined) return false;
-
-          // Numeric comparison (grade)
-          const numericValue = parseFloat(rawValue);
-          if (!isNaN(numericValue) && typeof value === 'number') {
-            switch (operator) {
-              case '>': return value > numericValue;
-              case '<': return value < numericValue;
-              case '=': return value === numericValue;
-            }
-          }
-
-          // Date comparison
-          if (rawValue.includes('-') && typeof value === 'string') {
-            const parsedDate = new Date(rawValue);
-            const traineeDate = new Date(value);
-            if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
-              switch (operator) {
-                case '>': return traineeDate > parsedDate;
-                case '<': return traineeDate < parsedDate;
-                case '=': return traineeDate.getTime() === parsedDate.getTime();
-              }
-            }
-          }
-
-          // Text matching (exact or contains)
-          return String(value).toLowerCase().includes(rawValue);
-        }
-
-        // Global operator without column: >, <, =
-        const opMatch = f.match(/^([><=])\s*(.+)$/);
-        if (opMatch) {
-          const operator = opMatch[1];
-          const rawValue = opMatch[2];
-
-          // Grade numeric comparison
-          const num = parseFloat(rawValue);
-          if (!isNaN(num)) {
-            return operator === '>' ? data.grade > num :
-                   operator === '<' ? data.grade < num :
-                   data.grade === num;
-          }
-
-          // Date comparison
-          if (rawValue.includes('-')) {
-            const parsedDate = new Date(rawValue);
-            const traineeDate = new Date(data.date);
-            if (!isNaN(parsedDate.getTime()) && !isNaN(traineeDate.getTime())) {
-              return operator === '>' ? traineeDate > parsedDate :
-                     operator === '<' ? traineeDate < parsedDate :
-                     traineeDate.getTime() === parsedDate.getTime();
-            }
-          }
-
-          return true;
-        }
-
-        // Default global text search
-        return Object.values(data).some(v =>
-          String(v).toLowerCase().includes(f)
-        );
-      });
+      return filters.every(f => Object.values(data).some(v => String(v).toLowerCase().includes(f)));
     };
 
-    // Restore filter state
+    // Restore filter
     const savedFilter = localStorage.getItem(this.FILTER_STORAGE_KEY);
     if (savedFilter) {
       this.filterValue = savedFilter;
@@ -182,8 +104,9 @@ export class DataComponent implements OnInit, AfterViewInit {
   addTrainee(): void {
     const newTrainee = this.createEmptyTrainee();
     newTrainee.id = this.nextTempId--;
+
     this.isNewTrainee = true;
-    this.currentTempId = newTrainee.id;
+    this.currentTempRow = newTrainee;
 
     this.dataService.addTrainee({ ...newTrainee });
     this.editingTrainee = { ...newTrainee };
@@ -203,9 +126,9 @@ export class DataComponent implements OnInit, AfterViewInit {
     if (!form.valid) return;
     this.editingTrainee.grade = Math.min(Math.max(this.editingTrainee.grade, 0), 100);
 
-    if (this.isNewTrainee && this.currentTempId != null) {
-      this.dataService.replaceTrainee(this.currentTempId, this.editingTrainee);
-      this.currentTempId = null;
+    if (this.isNewTrainee && this.currentTempRow) {
+      this.dataService.replaceTrainee(this.currentTempRow.id, this.editingTrainee);
+      this.currentTempRow = null;
     } else if (this.selectedTrainee) {
       this.dataService.updateTrainee(this.editingTrainee);
     }
@@ -214,9 +137,9 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   cancelEdit(): void {
-    if (this.isNewTrainee && this.currentTempId != null) {
-      this.dataService.removeTrainee(this.currentTempId);
-      this.currentTempId = null;
+    if (this.isNewTrainee && this.currentTempRow) {
+      this.dataService.removeTrainee(this.currentTempRow.id);
+      this.currentTempRow = null;
     }
     this.showDetails = false;
     this.isNewTrainee = false;
@@ -232,13 +155,12 @@ export class DataComponent implements OnInit, AfterViewInit {
     const toRemove = [...this.selection.selected];
     for (const t of toRemove) this.dataService.removeTrainee(t.id);
 
-    const removedIds = new Set(toRemove.map(t => t.id));
-    if (this.selectedTrainee && removedIds.has(this.selectedTrainee.id)) {
+    if (this.selectedTrainee && toRemove.includes(this.selectedTrainee)) {
       this.selectedTrainee = null;
       this.showDetails = false;
     }
-    if (this.currentTempId != null && removedIds.has(this.currentTempId)) {
-      this.currentTempId = null;
+    if (this.currentTempRow && toRemove.includes(this.currentTempRow)) {
+      this.currentTempRow = null;
       this.showDetails = false;
     }
 
