@@ -290,11 +290,11 @@ A hosted version of the project is available at:
 
 ## 👩‍💻 Author
 
-**Yael Karat**
-Software Developer | Web Development | Test Automation
-📧 [yaelkarat@gmail.com](mailto:yaelkarat@gmail.com)
-🌐 [LinkedIn Profile](https://www.linkedin.com/in/yael-karat)
-💻 [GitHub Profile](https://github.com/Yael-Karat)
+**Yael Karat**  
+Software Developer | Full Stack Developer | Web Development | Test Automation  
+📧 [yaelkarat@gmail.com](mailto:yaelkarat@gmail.com)  
+🌐 [LinkedIn Profile](https://www.linkedin.com/in/yael-karat)  
+💻 [GitHub Profile](https://github.com/Yael-Karat)  
 
 ---
 
