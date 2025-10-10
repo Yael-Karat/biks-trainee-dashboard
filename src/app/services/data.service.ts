@@ -58,6 +58,13 @@ export class DataService {
     this.saveToStorage();
   }
 
+  removeTraineeByIndex(index: number): void {
+    if (index >= 0 && index < this.trainees.length) {
+      this.trainees.splice(index, 1);
+      this.traineesSubject.next([...this.trainees]);
+    }
+  }
+
   /**
    * Replace a temporary trainee (identified by oldId) with the updated trainee.
    * If not found, just adds the updated trainee.
