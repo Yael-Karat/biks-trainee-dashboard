@@ -292,7 +292,7 @@ A hosted version of the project is available at:
 
 **Yael Karat**  
 Software Developer | Full Stack Developer | Web Development | Test Automation  
-📧 [yaelkarat@gmail.com](mailto:yaelkarat@gmail.com)  
+📧 [yaelkarat01@gmail.com](mailto:yaelkarat01@gmail.com)  
 🌐 [LinkedIn Profile](https://www.linkedin.com/in/yael-karat)  
 💻 [GitHub Profile](https://github.com/Yael-Karat)  
 
