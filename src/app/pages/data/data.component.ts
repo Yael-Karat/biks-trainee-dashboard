@@ -149,19 +149,28 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   removeSelectedTrainees(): void {
     if (!this.selection.hasValue()) return;
+
     const confirmDelete = window.confirm('Are you sure you want to delete the selected trainee(s)?');
     if (!confirmDelete) return;
 
     const toRemove = [...this.selection.selected];
-    for (const t of toRemove) this.dataService.removeTrainee(t.id);
 
-    if (this.selectedTrainee && toRemove.includes(this.selectedTrainee)) {
-      this.selectedTrainee = null;
-      this.showDetails = false;
-    }
-    if (this.currentTempRow && toRemove.includes(this.currentTempRow)) {
-      this.currentTempRow = null;
-      this.showDetails = false;
+    for (const t of toRemove) {
+      // Remove the exact object reference
+      const index = this.dataSource.data.indexOf(t);
+      if (index > -1) {
+        this.dataService.removeTraineeByIndex(index); // <-- new method in service
+      }
+
+      // Clear selection if the row being edited is removed
+      if (this.selectedTrainee === t) {
+        this.selectedTrainee = null;
+        this.showDetails = false;
+      }
+      if (this.currentTempRow === t) {
+        this.currentTempRow = null;
+        this.showDetails = false;
+      }
     }
 
     this.selection.clear();
