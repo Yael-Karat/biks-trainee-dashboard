@@ -1,0 +1,92 @@
+.monitor-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.filters-card {
+  padding: 12px;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  min-width: 220px;
+  flex: 1 1 280px;
+}
+
+.ids-field {
+  max-width: 320px;
+}
+
+.name-field {
+  flex: 2 1 360px;
+}
+
+.state-filters {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  align-items: flex-start;
+}
+
+.state-checkboxes {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.filters-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.table-card {
+  padding: 12px;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow: auto;
+}
+
+.avg-value {
+  font-weight: 600;
+}
+
+.status-pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pill.passed {
+  background-color: #e8f5e9; // light green background
+  color: #2e7d32; // green text
+}
+
+.status-pill.failed {
+  background-color: #ffebee; // light red
+  color: #c62828; // red text
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-field {
+    width: 100%;
+  }
+}
