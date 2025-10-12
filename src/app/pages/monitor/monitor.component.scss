@@ -22,7 +22,7 @@
 }
 
 .ids-field {
-  max-width: 320px;
+  max-width: 350px;
 }
 
 .name-field {
@@ -89,4 +89,16 @@
   .filter-field {
     width: 100%;
   }
+}
+.select-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 4px;
+}
+.select-actions button {
+  font-size: 0.8rem;
+  padding: 0 4px;
+  min-width: unset;
 }
