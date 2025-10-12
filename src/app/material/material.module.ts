@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
   imports: [
@@ -27,7 +28,9 @@ import { MatSelectModule } from '@angular/material/select';
     MatToolbarModule,
     MatCheckboxModule,
     DragDropModule,
-    MatSelectModule
+    MatSelectModule,
+    ReactiveFormsModule,
+    MatDialogModule
   ],
   exports: [
     MatCardModule,
@@ -40,7 +43,9 @@ import { MatSelectModule } from '@angular/material/select';
     MatFormFieldModule,
     MatCheckboxModule,
     DragDropModule,
-    MatSelectModule
+    MatSelectModule,
+    ReactiveFormsModule,
+    MatDialogModule
   ]
 })
 export class MaterialModule {}
