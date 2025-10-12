@@ -1,3 +1,4 @@
+// src/app/pages/data/data.component.ts
 import { Component, OnInit, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -42,11 +43,11 @@ export class DataComponent implements OnInit, AfterViewInit {
   private readonly PAGINATOR_PAGE_KEY = 'traineePageIndex';
   private readonly PAGINATOR_SIZE_KEY = 'traineePageSize';
 
-  displayedColumns: string[] = ['select', 'actions', 'id', 'name', 'date', 'grade', 'subject'];
+  displayedColumns: string[] = ['select', 'edit', 'id', 'name', 'date', 'grade', 'subject'];
   dataSource = new MatTableDataSource<Trainee>();
   selection = new SelectionModel<Trainee>(true, []);
 
-  nextTempId = -1;
+  currentTempId: number | null = null;
 
   selectedTrainee: Trainee | null = null;
   editingTrainee: Trainee = this.createEmptyTrainee();
@@ -55,27 +56,135 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   filterValue: string = '';
 
-  currentTempRow: Trainee | null = null; // <-- track the exact new row object
+  currentTempRow: Trainee | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  constructor(private dataService: DataService, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private dataService: DataService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    this.dataService.trainees$.subscribe(trainees => this.dataSource.data = trainees);
+    this.dataService.trainees$.subscribe(trainees => {
+      this.dataSource.data = trainees;
+    });
 
-    // Filter predicate
-    this.dataSource.filterPredicate = (data: Trainee, filter: string) => {
-      if (!filter) return true;
-      const filters = filter.split(',').map(f => f.trim().toLowerCase());
-      return filters.every(f => Object.values(data).some(v => String(v).toLowerCase().includes(f)));
+    // Helper: parse a date safely. Accepts Date | "YYYY-MM-DD" | other strings.
+    const parseDateSafe = (val: any): Date | null => {
+      if (val == null) return null;
+      if (val instanceof Date) {
+        return isNaN(val.getTime()) ? null : val;
+      }
+      const s = String(val).trim();
+      // If format is exactly YYYY-MM-DD, append T00:00:00 to avoid timezone shift
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+        const d = new Date(s + 'T00:00:00');
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
     };
 
-    // Restore filter
+    // Integrated filter predicate with support for multiple filters, column-specific filters, and operators
+    this.dataSource.filterPredicate = (data: Trainee, filter: string): boolean => {
+      if (!filter) return true;
+
+      // split by comma for integrated filters
+      const filters = filter.split(',').map(f => f.trim()).filter(Boolean);
+
+      return filters.every(f => {
+        if (!f) return true;
+
+        // Column-specific filter: e.g., date:>2024-01-01 or grade:<80 or name:yael
+        const colMatch = f.match(/^(\w+):\s*([><=]?)(.+)$/);
+        if (colMatch) {
+          const col = colMatch[1];
+          const operator = colMatch[2] || '=';
+          const rawValue = colMatch[3].trim();
+
+          const value = (data as any)[col];
+          if (value === undefined) return false;
+
+          // Numeric column: grade
+          if (col === 'grade') {
+            const num = parseFloat(rawValue);
+            if (isNaN(num)) return true; // invalid numeric filter - ignore
+            switch (operator) {
+              case '>': return value > num;
+              case '<': return value < num;
+              case '=': return value === num;
+              default: return true;
+            }
+          }
+
+          // Date column
+          if (col === 'date') {
+            const parsedDate = parseDateSafe(rawValue);
+            const traineeDate = parseDateSafe(value);
+            if (!parsedDate || !traineeDate) return true; // can't interpret → don't exclude
+            switch (operator) {
+              case '>': return traineeDate > parsedDate;
+              case '<': return traineeDate < parsedDate;
+              case '=':
+              default:
+                // Compare only date part (yyyy-mm-dd)
+                return traineeDate.toISOString().split('T')[0] === parsedDate.toISOString().split('T')[0];
+            }
+          }
+
+          // Text columns (id, name, subject, ...)
+          const left = String(value).toLowerCase();
+          const right = rawValue.toLowerCase();
+          return left.includes(right);
+        }
+
+        // Global operator without column: >, <, =
+        const opMatch = f.match(/^([><=])\s*(.+)$/);
+        if (opMatch) {
+          const operator = opMatch[1];
+          const rawValue = opMatch[2].trim();
+
+          // Check for full or partial date format first
+          if (/^\d{4}-\d{1,2}(-\d{1,2})?$/.test(rawValue)) {
+            const parsedDate = parseDateSafe(rawValue);
+            const traineeDate = parseDateSafe(data.date);
+            if (!parsedDate || !traineeDate) return false;
+
+            switch (operator) {
+              case '>': return traineeDate > parsedDate;
+              case '<': return traineeDate < parsedDate;
+              case '=':
+              default:
+                return traineeDate.toISOString().split('T')[0] === parsedDate.toISOString().split('T')[0];
+            }
+          }
+
+          // Then check numeric (grade)
+          const num = parseFloat(rawValue);
+          if (!isNaN(num)) {
+            switch (operator) {
+              case '>': return data.grade > num;
+              case '<': return data.grade < num;
+              case '=': return data.grade === num;
+            }
+          }
+
+          // If not numeric/date, treat as global text search fallback
+        }
+
+        // Default: global text search (case-insensitive)
+        const term = f.toLowerCase();
+        return Object.values(data).some(v => String(v).toLowerCase().includes(term));
+      });
+    };
+
+    // Restore filter from localStorage (preserve case/format)
     const savedFilter = localStorage.getItem(this.FILTER_STORAGE_KEY);
     if (savedFilter) {
       this.filterValue = savedFilter;
-      this.dataSource.filter = savedFilter.trim().toLowerCase();
+      // apply exactly as saved (no forcing to lower-case)
+      this.dataSource.filter = savedFilter.trim();
     }
   }
 
@@ -103,7 +212,6 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   addTrainee(): void {
     const newTrainee = this.createEmptyTrainee();
-    newTrainee.id = this.nextTempId--;
 
     this.isNewTrainee = true;
     this.currentTempRow = newTrainee;
@@ -156,10 +264,11 @@ export class DataComponent implements OnInit, AfterViewInit {
     const toRemove = [...this.selection.selected];
 
     for (const t of toRemove) {
-      // Remove the exact object reference
+      // Remove the exact object reference by index (keep your service method for this)
       const index = this.dataSource.data.indexOf(t);
       if (index > -1) {
-        this.dataService.removeTraineeByIndex(index); // <-- new method in service
+        // remove by id (service implementation in your project might accept index or id)
+        this.dataService.removeTrainee(t.id);
       }
 
       // Clear selection if the row being edited is removed
@@ -194,11 +303,15 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   applyFilter(event: Event): void {
-    const filterValue = (event.target as HTMLInputElement).value.trim().toLowerCase();
+    // Keep the exact filter string (don't lowercase whole thing)
+    const filterValue = (event.target as HTMLInputElement).value.trim();
     this.filterValue = filterValue;
     this.dataSource.filter = filterValue;
+
+    // Save filter to localStorage (store exact format)
     localStorage.setItem(this.FILTER_STORAGE_KEY, filterValue);
 
+    // Reset to first page when filter changes
     if (this.paginator) {
       this.paginator.firstPage();
       localStorage.setItem(this.PAGINATOR_PAGE_KEY, '0');
