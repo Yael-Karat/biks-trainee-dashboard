@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>Details Panel</h2>
+<mat-dialog-content>
+  <form #traineeForm="ngForm">
+    <div class="details-form">
+      <mat-form-field appearance="fill">
+        <mat-label>ID (Israeli ID, 9 digits)</mat-label>
+        <input matInput type="text" [(ngModel)]="trainee.id" name="id" required appIsraeliId placeholder="Enter ID" #idInput="ngModel">
+        <mat-error *ngIf="idInput.invalid && idInput.touched">
+          Invalid or missing ID
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Name</mat-label>
+        <input matInput [(ngModel)]="trainee.name" name="name" required placeholder="Enter name" #nameInput="ngModel">
+        <mat-error *ngIf="nameInput.invalid && nameInput.touched">
+          Name is required
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Date</mat-label>
+        <input matInput type="date" [(ngModel)]="trainee.date" name="date" required max="{{ todayDate() }}" #dateInput="ngModel" placeholder="Select date" title="Date">
+        <mat-error *ngIf="dateInput.invalid && dateInput.touched">
+          Invalid date
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Grade</mat-label>
+        <input matInput type="number" [(ngModel)]="trainee.grade" name="grade" required min="0" max="100" #gradeInput="ngModel" placeholder="Enter grade">
+        <mat-error *ngIf="gradeInput.invalid && gradeInput.touched">
+          Grade must be 0-100
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Subject</mat-label>
+        <input matInput [(ngModel)]="trainee.subject" name="subject" required placeholder="Enter subject" #subjectInput="ngModel">
+        <mat-error *ngIf="subjectInput.invalid && subjectInput.touched">
+          Subject is required
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <!-- Save button disabled until form is valid -->
+  <button mat-raised-button color="primary" (click)="saveTrainee(traineeForm)" [disabled]="traineeForm.invalid">
+    Save
+  </button>
+  <button mat-stroked-button color="warn" (click)="cancel()">Cancel</button>
+</mat-dialog-actions>
