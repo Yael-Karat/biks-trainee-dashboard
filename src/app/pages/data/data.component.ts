@@ -1,11 +1,8 @@
-// src/app/pages/data/data.component.ts
 import { Component, OnInit, AfterViewInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatTableModule } from '@angular/material/table';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { FormsModule } from '@angular/forms';
+import { MatTableDataSource, MatTableModule } from '@angular/material/table';
+import { MatPaginator, PageEvent, MatPaginatorModule } from '@angular/material/paginator';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,10 +10,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SelectionModel } from '@angular/cdk/collections';
 import { DataService } from '../../services/data.service';
 import { Trainee } from '../../models/trainee';
-import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directive';
+import { TraineeDetailsDialogComponent } from './trainee-details-dialog.component';
 
 @Component({
   selector: 'app-data',
@@ -35,7 +33,7 @@ import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directi
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    IsraeliIdValidatorDirective
+    MatDialogModule
   ]
 })
 export class DataComponent implements OnInit, AfterViewInit {
@@ -48,21 +46,18 @@ export class DataComponent implements OnInit, AfterViewInit {
   selection = new SelectionModel<Trainee>(true, []);
 
   currentTempId: number | null = null;
-
   selectedTrainee: Trainee | null = null;
-  editingTrainee: Trainee = this.createEmptyTrainee();
   showDetails = false;
   isNewTrainee = false;
-
   filterValue: string = '';
-
   currentTempRow: Trainee | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   constructor(
     private dataService: DataService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -211,48 +206,31 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   addTrainee(): void {
-    const newTrainee = this.createEmptyTrainee();
+    const dialogRef = this.dialog.open(TraineeDetailsDialogComponent, {
+      width: '400px',
+      data: { trainee: this.createEmptyTrainee(), isNew: true }
+    });
 
-    this.isNewTrainee = true;
-    this.currentTempRow = newTrainee;
-
-    this.dataService.addTrainee({ ...newTrainee });
-    this.editingTrainee = { ...newTrainee };
-    this.showDetails = true;
-
-    this.cdr.detectChanges();
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.dataService.addTrainee(result);
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   selectTrainee(row: Trainee): void {
-    this.isNewTrainee = false;
-    this.selectedTrainee = row;
-    this.editingTrainee = { ...row };
-    this.showDetails = true;
-  }
+    const dialogRef = this.dialog.open(TraineeDetailsDialogComponent, {
+      width: '400px',
+      data: { trainee: { ...row }, isNew: false }
+    });
 
-  saveTrainee(form: NgForm): void {
-    if (!form.valid) return;
-    this.editingTrainee.grade = Math.min(Math.max(this.editingTrainee.grade, 0), 100);
-
-    if (this.isNewTrainee && this.currentTempRow) {
-      this.dataService.replaceTrainee(this.currentTempRow.id, this.editingTrainee);
-      this.currentTempRow = null;
-    } else if (this.selectedTrainee) {
-      this.dataService.updateTrainee(this.editingTrainee);
-    }
-
-    this.cancelEdit();
-  }
-
-  cancelEdit(): void {
-    if (this.isNewTrainee && this.currentTempRow) {
-      this.dataService.removeTrainee(this.currentTempRow.id);
-      this.currentTempRow = null;
-    }
-    this.showDetails = false;
-    this.isNewTrainee = false;
-    this.selectedTrainee = null;
-    this.editingTrainee = this.createEmptyTrainee();
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.dataService.updateTrainee(result);
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   removeSelectedTrainees(): void {
