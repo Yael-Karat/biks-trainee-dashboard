@@ -13,6 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { SelectionModel } from '@angular/cdk/collections';
 import { DataService } from '../../services/data.service';
+import { StateService } from '../../services/state.service';
 import { Trainee } from '../../models/trainee';
 import { TraineeDetailsDialogComponent } from './trainee-details-dialog.component';
 
@@ -37,10 +38,6 @@ import { TraineeDetailsDialogComponent } from './trainee-details-dialog.componen
   ]
 })
 export class DataComponent implements OnInit, AfterViewInit {
-  private readonly FILTER_STORAGE_KEY = 'traineeFilter';
-  private readonly PAGINATOR_PAGE_KEY = 'traineePageIndex';
-  private readonly PAGINATOR_SIZE_KEY = 'traineePageSize';
-
   displayedColumns: string[] = ['select', 'edit', 'id', 'name', 'date', 'grade', 'subject'];
   dataSource = new MatTableDataSource<Trainee>();
   selection = new SelectionModel<Trainee>(true, []);
@@ -57,7 +54,8 @@ export class DataComponent implements OnInit, AfterViewInit {
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private stateService: StateService
   ) {}
 
   ngOnInit(): void {
@@ -65,14 +63,13 @@ export class DataComponent implements OnInit, AfterViewInit {
       this.dataSource.data = trainees;
     });
 
-    // Helper: parse a date safely. Accepts Date | "YYYY-MM-DD" | other strings.
+    // Helper: safely parse a date (supports string, Date, or ISO)
     const parseDateSafe = (val: any): Date | null => {
       if (val == null) return null;
       if (val instanceof Date) {
         return isNaN(val.getTime()) ? null : val;
       }
       const s = String(val).trim();
-      // If format is exactly YYYY-MM-DD, append T00:00:00 to avoid timezone shift
       if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
         const d = new Date(s + 'T00:00:00');
         return isNaN(d.getTime()) ? null : d;
@@ -81,17 +78,16 @@ export class DataComponent implements OnInit, AfterViewInit {
       return isNaN(d.getTime()) ? null : d;
     };
 
-    // Integrated filter predicate with support for multiple filters, column-specific filters, and operators
+    // --- Filter Predicate: keep all your advanced tests ---
     this.dataSource.filterPredicate = (data: Trainee, filter: string): boolean => {
       if (!filter) return true;
 
-      // split by comma for integrated filters
       const filters = filter.split(',').map(f => f.trim()).filter(Boolean);
 
       return filters.every(f => {
         if (!f) return true;
 
-        // Column-specific filter: e.g., date:>2024-01-01 or grade:<80 or name:yael
+        // Column-specific filter: e.g. grade:>80, date:<2024-01-01, name:yael
         const colMatch = f.match(/^(\w+):\s*([><=]?)(.+)$/);
         if (colMatch) {
           const col = colMatch[1];
@@ -104,7 +100,7 @@ export class DataComponent implements OnInit, AfterViewInit {
           // Numeric column: grade
           if (col === 'grade') {
             const num = parseFloat(rawValue);
-            if (isNaN(num)) return true; // invalid numeric filter - ignore
+            if (isNaN(num)) return true;
             switch (operator) {
               case '>': return value > num;
               case '<': return value < num;
@@ -117,30 +113,29 @@ export class DataComponent implements OnInit, AfterViewInit {
           if (col === 'date') {
             const parsedDate = parseDateSafe(rawValue);
             const traineeDate = parseDateSafe(value);
-            if (!parsedDate || !traineeDate) return true; // can't interpret → don't exclude
+            if (!parsedDate || !traineeDate) return true;
             switch (operator) {
               case '>': return traineeDate > parsedDate;
               case '<': return traineeDate < parsedDate;
               case '=':
               default:
-                // Compare only date part (yyyy-mm-dd)
                 return traineeDate.toISOString().split('T')[0] === parsedDate.toISOString().split('T')[0];
             }
           }
 
-          // Text columns (id, name, subject, ...)
+          // Text columns (id, name, subject, etc.)
           const left = String(value).toLowerCase();
           const right = rawValue.toLowerCase();
           return left.includes(right);
         }
 
-        // Global operator without column: >, <, =
+        // Global operator-only filter (e.g. >80 or <2024-01-01)
         const opMatch = f.match(/^([><=])\s*(.+)$/);
         if (opMatch) {
           const operator = opMatch[1];
           const rawValue = opMatch[2].trim();
 
-          // Check for full or partial date format first
+          // Try date format
           if (/^\d{4}-\d{1,2}(-\d{1,2})?$/.test(rawValue)) {
             const parsedDate = parseDateSafe(rawValue);
             const traineeDate = parseDateSafe(data.date);
@@ -155,7 +150,7 @@ export class DataComponent implements OnInit, AfterViewInit {
             }
           }
 
-          // Then check numeric (grade)
+          // Try numeric (grade)
           const num = parseFloat(rawValue);
           if (!isNaN(num)) {
             switch (operator) {
@@ -164,38 +159,36 @@ export class DataComponent implements OnInit, AfterViewInit {
               case '=': return data.grade === num;
             }
           }
-
-          // If not numeric/date, treat as global text search fallback
         }
 
-        // Default: global text search (case-insensitive)
+        // Default global text search
         const term = f.toLowerCase();
         return Object.values(data).some(v => String(v).toLowerCase().includes(term));
       });
     };
 
-    // Restore filter from localStorage (preserve case/format)
-    const savedFilter = localStorage.getItem(this.FILTER_STORAGE_KEY);
-    if (savedFilter) {
-      this.filterValue = savedFilter;
-      // apply exactly as saved (no forcing to lower-case)
-      this.dataSource.filter = savedFilter.trim();
-    }
+    // --- Restore state from StateService ---
+    const saved = this.stateService.getDataState();
+    this.filterValue = saved.filterValue || '';
+    this.dataSource.filter = this.filterValue.trim();
   }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
 
-    const savedIndex = localStorage.getItem(this.PAGINATOR_PAGE_KEY);
-    const savedSize = localStorage.getItem(this.PAGINATOR_SIZE_KEY);
-    if (savedSize) this.paginator.pageSize = +savedSize;
-    if (savedIndex) this.paginator.pageIndex = +savedIndex;
+    // Restore pagination from shared state
+    const saved = this.stateService.getDataState();
+    if (saved.pageSize) this.paginator.pageSize = saved.pageSize;
+    if (saved.pageIndex) this.paginator.pageIndex = saved.pageIndex;
 
     this.dataSource._updateChangeSubscription();
 
+    // Save paginator changes
     this.paginator.page.subscribe((event: PageEvent) => {
-      localStorage.setItem(this.PAGINATOR_PAGE_KEY, event.pageIndex.toString());
-      localStorage.setItem(this.PAGINATOR_SIZE_KEY, event.pageSize.toString());
+      this.stateService.setDataState({
+        pageIndex: event.pageIndex,
+        pageSize: event.pageSize
+      });
     });
 
     this.cdr.detectChanges();
@@ -235,28 +228,19 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   removeSelectedTrainees(): void {
     if (!this.selection.hasValue()) return;
-
     const confirmDelete = window.confirm('Are you sure you want to delete the selected trainee(s)?');
     if (!confirmDelete) return;
 
     const toRemove = [...this.selection.selected];
-
     for (const t of toRemove) {
-      // Remove the exact object reference by index (keep your service method for this)
       const index = this.dataSource.data.indexOf(t);
       if (index > -1) {
-        // remove by id (service implementation in your project might accept index or id)
         this.dataService.removeTrainee(t.id);
       }
-
-      // Clear selection if the row being edited is removed
-      if (this.selectedTrainee === t) {
+      if (this.selectedTrainee === t || this.currentTempRow === t) {
         this.selectedTrainee = null;
         this.showDetails = false;
-      }
-      if (this.currentTempRow === t) {
         this.currentTempRow = null;
-        this.showDetails = false;
       }
     }
 
@@ -281,18 +265,15 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   applyFilter(event: Event): void {
-    // Keep the exact filter string (don't lowercase whole thing)
     const filterValue = (event.target as HTMLInputElement).value.trim();
     this.filterValue = filterValue;
     this.dataSource.filter = filterValue;
 
-    // Save filter to localStorage (store exact format)
-    localStorage.setItem(this.FILTER_STORAGE_KEY, filterValue);
+    this.stateService.setDataState({ filterValue });
 
-    // Reset to first page when filter changes
     if (this.paginator) {
       this.paginator.firstPage();
-      localStorage.setItem(this.PAGINATOR_PAGE_KEY, '0');
+      this.stateService.setDataState({ pageIndex: 0 });
     }
   }
 }
