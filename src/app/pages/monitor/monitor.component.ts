@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DataService } from '../../services/data.service';
 import { Trainee } from '../../models/trainee';
+import { StateService } from '../../services/state.service';
 
 interface TraineeAggregate {
   id: number;
@@ -64,52 +65,45 @@ export class MonitorComponent implements OnInit, AfterViewInit, OnDestroy {
 
   readonly PASS_THRESHOLD = 65;
 
-  constructor(private dataService: DataService, private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private dataService: DataService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private stateService: StateService
+  ) {}
 
   ngOnInit(): void {
-    // Load state from URL on first init
-    const qSub = this.route.queryParamMap.subscribe(params => {
-      if (this.ignoreQuerySync) return; // prevent loopback updates
-      const ids = params.get('ids');
-      const name = params.get('name') ?? '';
-      const passed = params.get('passed');
-      const failed = params.get('failed');
+  // Load saved state first
+  const savedState = this.stateService.getMonitorState();
+  this.idsControl.setValue(savedState.ids, { emitEvent: false });
+  this.nameControl.setValue(savedState.name, { emitEvent: false });
+  this.passedControl.setValue(savedState.passed, { emitEvent: false });
+  this.failedControl.setValue(savedState.failed, { emitEvent: false });
 
-      if (ids) {
-        try {
-          const parsed = JSON.parse(ids);
-          if (Array.isArray(parsed)) this.idsControl.setValue(parsed.map(Number), { emitEvent: false });
-        } catch {
-          this.idsControl.setValue(ids.split(',').map(Number).filter(Boolean), { emitEvent: false });
-        }
-      } else {
-        this.idsControl.setValue([], { emitEvent: false });
-      }
+  // Subscribe to data
+  const dataSub = this.dataService.trainees$.subscribe(data => {
+    this.trainees = data ?? [];
+    this.availableIds = Array.from(new Set(this.trainees.map(t => t.id))).sort((a, b) => a - b);
+    this.applyFiltersAndBuildAggregates();
+  });
+  this.subs.push(dataSub);
 
-      this.nameControl.setValue(name, { emitEvent: false });
-      this.passedControl.setValue(passed === null ? true : passed === 'true', { emitEvent: false });
-      this.failedControl.setValue(failed === null ? true : failed === 'true', { emitEvent: false });
+  // Watch filter changes
+  const saveState = () => this.stateService.setMonitorState({
+    ids: this.idsControl.value ?? [],
+    name: this.nameControl.value ?? '',
+    passed: this.passedControl.value ?? true,
+    failed: this.failedControl.value ?? true
+  });
 
-      this.applyFiltersAndBuildAggregates();
-    });
-    this.subs.push(qSub);
+  this.subs.push(
+    this.idsControl.valueChanges.subscribe(() => { saveState(); this.onFilterChange(); }),
+    this.nameControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => { saveState(); this.onFilterChange(); }),
+    this.passedControl.valueChanges.subscribe(() => { saveState(); this.onFilterChange(); }),
+    this.failedControl.valueChanges.subscribe(() => { saveState(); this.onFilterChange(); })
+  );
+}
 
-    // Subscribe to raw data
-    const dataSub = this.dataService.trainees$.subscribe(data => {
-      this.trainees = data ?? [];
-      this.availableIds = Array.from(new Set(this.trainees.map(t => t.id))).sort((a, b) => a - b);
-      this.applyFiltersAndBuildAggregates();
-    });
-    this.subs.push(dataSub);
-
-    // Reactive filters
-    const nameSub = this.nameControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged())
-      .subscribe(() => this.onFilterChange());
-    const idsSub = this.idsControl.valueChanges.subscribe(() => this.onFilterChange());
-    const passedSub = this.passedControl.valueChanges.subscribe(() => this.onFilterChange());
-    const failedSub = this.failedControl.valueChanges.subscribe(() => this.onFilterChange());
-    this.subs.push(nameSub, idsSub, passedSub, failedSub);
-  }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
