@@ -52,7 +52,7 @@ export class MonitorComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  idsControl = new FormControl<number[]>([]);  // ✅ fixed
+  idsControl = new FormControl<number[]>([]);
   nameControl = new FormControl('');
   passedControl = new FormControl(true);
   failedControl = new FormControl(true);
@@ -60,7 +60,7 @@ export class MonitorComponent implements OnInit, AfterViewInit, OnDestroy {
   availableIds: number[] = [];
   private trainees: Trainee[] = [];
   private subs: Subscription[] = [];
-  private ignoreQuerySync = false; // ✅ to prevent self-triggered query reloads
+  private ignoreQuerySync = false; // to prevent self-triggered query reloads
 
   readonly PASS_THRESHOLD = 65;
 
@@ -69,7 +69,7 @@ export class MonitorComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     // Load state from URL on first init
     const qSub = this.route.queryParamMap.subscribe(params => {
-      if (this.ignoreQuerySync) return; // ✅ prevent loopback updates
+      if (this.ignoreQuerySync) return; // prevent loopback updates
       const ids = params.get('ids');
       const name = params.get('name') ?? '';
       const passed = params.get('passed');
