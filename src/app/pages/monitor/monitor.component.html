@@ -1,85 +1,103 @@
 <div class="monitor-root mat-elevation-z2">
 
+  <!-- FILTERS SECTION -->
   <mat-card class="filters-card">
     <mat-card-title>Filters</mat-card-title>
     <mat-card-content>
       <div class="filters-row">
+        
+        <!-- ID Filter -->
         <mat-form-field appearance="outline" class="filter-field ids-field">
           <mat-label>IDs</mat-label>
           <mat-select [formControl]="idsControl" multiple>
             <mat-option *ngFor="let id of availableIds" [value]="id">{{ id }}</mat-option>
+            <div class="select-actions">
+              <button mat-button color="warn" type="button" (click)="clearIds()">Clear All</button>
+            </div>
           </mat-select>
           <mat-hint>Select one or more trainee IDs (empty = show all)</mat-hint>
         </mat-form-field>
 
+        <!-- Name Filter -->
         <mat-form-field appearance="outline" class="filter-field name-field">
-          <mat-label>Name or substring</mat-label>
-          <input matInput [formControl]="nameControl" placeholder="Search by name or id substring">
+          <mat-label>Name or ID substring</mat-label>
+          <input 
+            matInput 
+            [formControl]="nameControl" 
+            placeholder="Search by name or ID..."
+            autocomplete="off">
           <mat-hint>Empty = show all</mat-hint>
         </mat-form-field>
 
+        <!-- State Filter -->
         <div class="state-filters">
           <mat-label>State</mat-label>
           <div class="state-checkboxes">
-            <mat-checkbox [formControl]="passedControl">Passed</mat-checkbox>
-            <mat-checkbox [formControl]="failedControl">Failed</mat-checkbox>
+            <mat-checkbox color="primary" [formControl]="passedControl">Passed</mat-checkbox>
+            <mat-checkbox color="warn" [formControl]="failedControl">Failed</mat-checkbox>
           </div>
         </div>
+
       </div>
 
+      <!-- Action Buttons -->
       <div class="filters-actions">
-        <button mat-stroked-button (click)="clearFilters()">Clear</button>
+        <button mat-stroked-button color="basic" (click)="clearFilters()">Clear</button>
         <button mat-flat-button color="primary" (click)="onFilterChange()">Apply</button>
       </div>
     </mat-card-content>
   </mat-card>
 
+  <!-- TABLE SECTION -->
   <mat-card class="table-card">
     <mat-card-title>Monitor</mat-card-title>
     <mat-card-content>
       <div class="table-wrapper">
-        <table mat-table [dataSource]="dataSource" class="mat-elevation-z1" matSort>
+        <table mat-table [dataSource]="dataSource" matSort matSortActive="avg" matSortDirection="desc" matSortDisableClear class="mat-elevation-z1">
 
           <!-- ID Column -->
           <ng-container matColumnDef="id">
-            <th mat-header-cell *matHeaderCellDef> ID </th>
-            <td mat-cell *matCellDef="let row"> {{row.id}} </td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+            <td mat-cell *matCellDef="let row"> {{ row.id }} </td>
           </ng-container>
 
           <!-- Name Column -->
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef> Name </th>
-            <td mat-cell *matCellDef="let row"> {{row.name}} </td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Name </th>
+            <td mat-cell *matCellDef="let row"> {{ row.name }} </td>
           </ng-container>
 
           <!-- Avg Column -->
           <ng-container matColumnDef="avg">
-            <th mat-header-cell *matHeaderCellDef> Average </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Average </th>
             <td mat-cell *matCellDef="let row">
-              <span class="avg-value">{{ row.avg }}</span>
+              <span class="avg-value">{{ row.avg | number:'1.0-2' }}</span>
             </td>
           </ng-container>
 
           <!-- Tests Count Column -->
           <ng-container matColumnDef="testsCount">
-            <th mat-header-cell *matHeaderCellDef> Tests </th>
-            <td mat-cell *matCellDef="let row"> {{row.testsCount}} </td>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Tests </th>
+            <td mat-cell *matCellDef="let row"> {{ row.testsCount }} </td>
           </ng-container>
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
             <td mat-cell *matCellDef="let row">
-              <span class="status-pill" [ngClass]="{'passed': row.status === 'Passed', 'failed': row.status === 'Failed'}">
+              <span class="status-pill" 
+                    [ngClass]="{'passed': row.status === 'Passed', 'failed': row.status === 'Failed'}">
                 {{ row.status }}
               </span>
             </td>
           </ng-container>
 
+          <!-- Table Rows -->
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
 
+        <!-- Paginator -->
         <mat-paginator [pageSize]="10" showFirstLastButtons></mat-paginator>
       </div>
     </mat-card-content>
