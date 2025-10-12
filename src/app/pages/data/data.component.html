@@ -1,8 +1,7 @@
 <mat-toolbar color="accent">
   <span style="margin-right: 8px;">Filter</span>
   <mat-form-field appearance="outline" style="flex: 1; max-width: 600px;">
-    <input matInput (keyup)="applyFilter($event)" [(ngModel)]="filterValue"
-           placeholder="Enter filter text (e.g., ID: IsraeliId , >80, <yyyy-mm-dd)">
+    <input matInput (keyup)="applyFilter($event)" [(ngModel)]="filterValue" placeholder="Enter filter text (e.g., ID: IsraeliId , >80, <yyyy-mm-dd)">
   </mat-form-field>
 
   <span class="spacer"></span>
@@ -47,9 +46,9 @@
         </td>
       </ng-container>
 
-      <!-- Actions Column -->
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <!-- Edit Column -->
+      <ng-container matColumnDef="edit">
+        <th mat-header-cell *matHeaderCellDef>Edit</th>
         <td mat-cell *matCellDef="let element">
           <button mat-icon-button color="primary" (click)="selectTrainee(element)">
             <mat-icon>edit</mat-icon>
