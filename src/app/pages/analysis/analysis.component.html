@@ -1,41 +1,47 @@
-<div class="filters" style="margin: 16px; display: flex; gap: 16px;">
-  <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-    <mat-label>Select Trainees</mat-label>
-    <mat-select [(value)]="selectedTrainees" multiple (selectionChange)="updateCharts()">
+<mat-toolbar color="primary">
+  <span>Analysis Dashboard</span>
+</mat-toolbar>
+
+<!-- Filters area -->
+<div class="filters" style="margin: 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+  <!-- IDs selector -->
+  <mat-form-field appearance="fill" floatLabel="always" style="flex:1; min-width:220px;">
+    <mat-label>IDs</mat-label>
+    <mat-select [(ngModel)]="selectedTrainees" multiple (selectionChange)="updateCharts()">
       <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
-        {{trainee.name}} (ID: {{trainee.id}})
+        {{ trainee.id }} - {{ trainee.name }}
       </mat-option>
     </mat-select>
   </mat-form-field>
 
-  <mat-form-field appearance="outline" style="flex: 1; min-width: 200px;">
-    <mat-label>Select Subjects</mat-label>
-    <mat-select [(value)]="selectedSubjects" multiple (selectionChange)="updateCharts()">
-      <mat-option *ngFor="let subject of subjects" [value]="subject">{{subject}}</mat-option>
+  <!-- Subjects selector -->
+  <mat-form-field appearance="fill" floatLabel="always" style="flex:1; min-width:220px;">
+    <mat-label>Subjects</mat-label>
+    <mat-select [(ngModel)]="selectedSubjects" multiple (selectionChange)="updateCharts()">
+      <mat-option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</mat-option>
     </mat-select>
   </mat-form-field>
 </div>
 
-<div cdkDropListGroup>
-  <div class="charts-container" style="display: flex; gap: 16px; margin: 16px; flex-wrap: wrap;">
-    <div
-      *ngFor="let chart of charts; let i = index"
-      cdkDropList
-      [cdkDropListData]="charts"
-      (cdkDropListDropped)="drop($event)"
-      style="flex: 1 1 45%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa;"
-    >
-      <canvas
-        baseChart
-        [data]="chart.data"
-        [labels]="chart.labels"
-        [type]="chart.type"
-        [options]="chart.options"
-      ></canvas>
-    </div>
+<!-- Charts layout (left: chart1, right: chart3, bottom: chart2 hidden by default) -->
+<div class="charts-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px;">
+  <div class="chart-card" cdkDropList [cdkDropListData]="charts" (cdkDropListDropped)="drop($event)">
+    <h3 style="margin:8px 0;">Chart 1: Grades average over time (per student)</h3>
+    <canvas baseChart *ngIf="charts[0]" [data]="charts[0].data" [type]="charts[0].type" [options]="charts[0].options"></canvas>
+  </div>
+
+  <div class="chart-card" cdkDropList [cdkDropListData]="charts" (cdkDropListDropped)="drop($event)">
+    <h3 style="margin:8px 0;">Chart 3: Grades averages per subject</h3>
+    <canvas baseChart *ngIf="charts[1]" [data]="charts[1].data" [type]="charts[1].type" [options]="charts[1].options"></canvas>
   </div>
 </div>
 
-<div style="margin-top: 16px; margin: 16px;">
+<!-- Bottom hidden chart (visible here for convenience; you can keep it visually "hidden" and swap with swapHiddenChart) -->
+<div style="margin:16px;">
+  <h3 style="margin:8px 0;">Chart 2: Students averages for chosen IDs</h3>
+  <canvas baseChart *ngIf="hiddenChart" [data]="hiddenChart.data" [type]="hiddenChart.type" [options]="hiddenChart.options"></canvas>
+</div>
+
+<div style="margin:16px; text-align:center;">
   <button mat-raised-button color="accent" (click)="swapHiddenChart()">Swap Hidden Chart</button>
 </div>
