@@ -1,3 +1,35 @@
+.data-root {
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.filters-card {
+  padding: 12px;
+  font-size: larger;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  min-width: 220px;
+  flex: 2 1 360px;
+}
+
+.filters-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+
+}
+
 .spacer {
   flex: 1 1 auto;
 }
