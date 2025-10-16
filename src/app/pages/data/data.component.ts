@@ -248,6 +248,18 @@ export class DataComponent implements OnInit, AfterViewInit {
     this.cdr.detectChanges();
   }
 
+  clearFilters(): void {
+    this.filterValue = '';
+    this.dataSource.filter = '';
+    this.stateService.setDataState({ filterValue: '' });
+
+    // Reset paginator to first page after clearing
+    if (this.paginator) {
+      this.paginator.firstPage();
+      this.stateService.setDataState({ pageIndex: 0 });
+    }
+  }
+
   isAllSelected(): boolean {
     const numSelected = this.selection.selected.length;
     const numRows = this.dataSource.data.length;
