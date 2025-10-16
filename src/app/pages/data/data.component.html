@@ -1,94 +1,125 @@
-<mat-toolbar color="accent">
-  <span style="margin-right: 8px;">Filter</span>
-  <mat-form-field appearance="outline" style="flex: 1; max-width: 600px;">
-    <input matInput (keyup)="applyFilter($event)" [(ngModel)]="filterValue" placeholder="Enter filter text (e.g., ID: IsraeliId , >80, <yyyy-mm-dd)">
-  </mat-form-field>
+<div class="data-root mat-elevation-z2">
 
-  <span class="spacer"></span>
-
-  <button mat-raised-button color="primary" (click)="addTrainee()" style="margin-left: 10px;">
-    <mat-icon>person_add</mat-icon>
-    Add
-  </button>
-
-  <button mat-stroked-button color="warn"
-          [disabled]="!selection.hasValue()"
-          (click)="removeSelectedTrainees()"
-          style="margin-left: 5px;">
-    <mat-icon>person_remove</mat-icon>
-    Remove
-  </button>
-</mat-toolbar>
-
-<mat-card>
-  <mat-card-title>Trainee Test Results</mat-card-title>
-
-  <div class="table-container">
-    <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
-
-      <!-- Select Checkbox -->
-      <ng-container matColumnDef="select">
-        <th mat-header-cell *matHeaderCellDef>
-          <mat-checkbox
-            (change)="masterToggle()"
-            [checked]="isAllSelected()"
-            [indeterminate]="selection.hasValue() && !isAllSelected()"
-            aria-label="Select all rows">
-          </mat-checkbox>
-        </th>
-        <td mat-cell *matCellDef="let row">
-          <mat-checkbox
-            (click)="$event.stopPropagation()"
-            (change)="$event ? selection.toggle(row) : null"
-            [checked]="selection.isSelected(row)"
-            aria-label="Select row">
-          </mat-checkbox>
-        </td>
-      </ng-container>
-
-      <!-- Edit Column -->
-      <ng-container matColumnDef="edit">
-        <th mat-header-cell *matHeaderCellDef>Edit</th>
-        <td mat-cell *matCellDef="let element">
-          <button mat-icon-button color="primary" (click)="selectTrainee(element)">
-            <mat-icon>edit</mat-icon>
+  <!-- FILTERS SECTION -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <span style="margin-right: 8px; font-size: larger;">Filter</span>
+      <div class="filters-row">
+        <!-- General Filter Input -->
+        <mat-form-field appearance="outline" class="filter-field" style="max-width: 600px;">
+          <input
+            matInput
+            (keyup)="applyFilter($event)"
+            [(ngModel)]="filterValue"
+            placeholder="Enter filter (e.g., ID: IsraeliId , >80, <yyyy-mm-dd)"
+            autocomplete="off"
+          >
+          <button
+          mat-icon-button
+          matSuffix
+          *ngIf="filterValue"
+          (click)="clearFilters(); $event.stopPropagation()"
+          type="button"
+          title="Clear"
+          aria-label="Clear">
+          <span style="font-size: 18px;">✕</span>
+        </button>
+        </mat-form-field>
+        
+        <!-- Action Buttons -->
+        <div class="filters-actions">
+          <button mat-raised-button color="primary" (click)="addTrainee()">
+            <mat-icon>person_add</mat-icon>
+            Add
           </button>
-        </td>
-      </ng-container>
 
-      <!-- Data Columns -->
-      <ng-container matColumnDef="id">
-        <th mat-header-cell *matHeaderCellDef>ID</th>
-        <td mat-cell *matCellDef="let element">{{ element.id }}</td>
-      </ng-container>
+          <button
+            mat-stroked-button
+            color="warn"
+            [disabled]="!selection.hasValue()"
+            (click)="removeSelectedTrainees()"
+          >
+            <mat-icon>person_remove</mat-icon>
+            Remove
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let element">{{ element.name }}</td>
-      </ng-container>
+  <!-- TABLE SECTION -->
+  <mat-card class="table-card">
+    <mat-card-title>Trainee Test Results</mat-card-title>
 
-      <ng-container matColumnDef="subject">
-        <th mat-header-cell *matHeaderCellDef>Subject</th>
-        <td mat-cell *matCellDef="let element">{{ element.subject }}</td>
-      </ng-container>
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
 
-      <ng-container matColumnDef="grade">
-        <th mat-header-cell *matHeaderCellDef>Grade</th>
-        <td mat-cell *matCellDef="let element">{{ element.grade }}</td>
-      </ng-container>
+        <!-- Select Checkbox -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox
+              (change)="masterToggle()"
+              [checked]="isAllSelected()"
+              [indeterminate]="selection.hasValue() && !isAllSelected()"
+              aria-label="Select all rows"
+            ></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox
+              (click)="$event.stopPropagation()"
+              (change)="$event ? selection.toggle(row) : null"
+              [checked]="selection.isSelected(row)"
+              aria-label="Select row"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="date">
-        <th mat-header-cell *matHeaderCellDef>Date</th>
-        <td mat-cell *matCellDef="let element">{{ element.date }}</td>
-      </ng-container>
+        <!-- Edit Column -->
+        <ng-container matColumnDef="edit">
+          <th mat-header-cell *matHeaderCellDef>Edit</th>
+          <td mat-cell *matCellDef="let element">
+            <button mat-icon-button color="primary" (click)="selectTrainee(element)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
 
-      <!-- Header & Rows -->
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-          [class.selected-row]="selectedTrainee === row || (isNewTrainee && currentTempRow === row)">
-      </tr>
-    </table>
+        <!-- Data Columns -->
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>ID</th>
+          <td mat-cell *matCellDef="let element">{{ element.id }}</td>
+        </ng-container>
 
-    <mat-paginator [pageSize]="10" showFirstLastButtons></mat-paginator>
-  </div>
-</mat-card>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let element">{{ element.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="subject">
+          <th mat-header-cell *matHeaderCellDef>Subject</th>
+          <td mat-cell *matCellDef="let element">{{ element.subject }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="grade">
+          <th mat-header-cell *matHeaderCellDef>Grade</th>
+          <td mat-cell *matCellDef="let element">{{ element.grade }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let element">{{ element.date }}</td>
+        </ng-container>
+
+        <!-- Header & Rows -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns;"
+          [class.selected-row]="selectedTrainee === row || (isNewTrainee && currentTempRow === row)"
+        ></tr>
+      </table>
+
+      <mat-paginator [pageSize]="10" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card>
+</div>
