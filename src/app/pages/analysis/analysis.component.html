@@ -1,47 +1,146 @@
-<mat-toolbar color="primary">
-  <span>Analysis Dashboard</span>
-</mat-toolbar>
+<div class="analysis-root mat-elevation-z2">
+  
+  <!-- Filters Card (Always Visible) -->
+  <mat-card class="filters-card">
+    <mat-card-title>Filters</mat-card-title>
+    <mat-card-content>
+      <div class="filters-row">
+        <!-- IDs selector -->
+        <mat-form-field class="filter-field ids-field" appearance="outline">
+          <mat-label>Trainee IDs</mat-label>
+          <mat-select 
+            [(ngModel)]="selectedTrainees" 
+            multiple 
+            (selectionChange)="updateCharts()"
+            placeholder="Select IDs to filter">
+            <mat-select-trigger>
+              <span *ngIf="selectedTrainees.length === 0" class="placeholder-text">
+                Show All IDs
+              </span>
+              <span *ngIf="selectedTrainees.length > 0" class="selected-text">
+                {{ selectedTrainees.length }} ID(s) selected
+              </span>
+            </mat-select-trigger>
+            <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
+              ID: {{ trainee.id }} - {{ trainee.name }}
+            </mat-option>
+          </mat-select>
+          <button 
+            mat-icon-button 
+            matSuffix 
+            *ngIf="selectedTrainees.length > 0"
+            (click)="clearIds(); $event.stopPropagation()"
+            type="button"
+            title="Clear all selections"
+            aria-label="Clear selection">
+            <span style="font-size: 18px;">✕</span>
+          </button>
+          <mat-hint *ngIf="selectedTrainees.length === 0">
+            Click to select specific IDs or leave empty to show all
+          </mat-hint>
+        </mat-form-field>
 
-<!-- Filters area -->
-<div class="filters" style="margin: 16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
-  <!-- IDs selector -->
-  <mat-form-field appearance="fill" floatLabel="always" style="flex:1; min-width:220px;">
-    <mat-label>IDs</mat-label>
-    <mat-select [(ngModel)]="selectedTrainees" multiple (selectionChange)="updateCharts()">
-      <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
-        {{ trainee.id }} - {{ trainee.name }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+        <!-- Subjects selector -->
+        <mat-form-field class="filter-field subjects-field" appearance="outline">
+          <mat-label>Subjects</mat-label>
+          <mat-select 
+            [(ngModel)]="selectedSubjects" 
+            multiple 
+            (selectionChange)="updateCharts()"
+            placeholder="Select subjects to filter">
+            <mat-select-trigger>
+              <span *ngIf="selectedSubjects.length === 0" class="placeholder-text">
+                Show All Subjects
+              </span>
+              <span *ngIf="selectedSubjects.length > 0" class="selected-text">
+                {{ selectedSubjects.length }} Subject(s) selected
+              </span>
+            </mat-select-trigger>
+            <mat-option *ngFor="let subject of subjects" [value]="subject">
+              {{ subject }}
+            </mat-option>
+          </mat-select>
+          <button 
+            mat-icon-button 
+            matSuffix 
+            *ngIf="selectedSubjects.length > 0"
+            (click)="clearSubjects(); $event.stopPropagation()"
+            type="button"
+            title="Clear all selections"
+            aria-label="Clear selection">
+            <span style="font-size: 18px;">✕</span>
+          </button>
+          <mat-hint *ngIf="selectedSubjects.length === 0">
+            Click to select specific subjects or leave empty to show all
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </mat-card-content>
+  </mat-card>
 
-  <!-- Subjects selector -->
-  <mat-form-field appearance="fill" floatLabel="always" style="flex:1; min-width:220px;">
-    <mat-label>Subjects</mat-label>
-    <mat-select [(ngModel)]="selectedSubjects" multiple (selectionChange)="updateCharts()">
-      <mat-option *ngFor="let subject of subjects" [value]="subject">{{ subject }}</mat-option>
-    </mat-select>
-  </mat-form-field>
-</div>
+  <!-- Charts Section -->
+  <mat-card class="charts-card">
+    <mat-card-title>Charts</mat-card-title>
+    <mat-card-content>
+      <div class="charts-grid" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="drop($event)">
+        <!-- Chart 1 -->
+        <div class="chart-card" cdkDrag>
+          <h3 class="chart-title">{{ charts[0]?.title || 'Chart 1: Grades over time (per student)' }}</h3>
+          <div class="chart-container">
+            <canvas
+              baseChart
+              *ngIf="charts[0]"
+              [data]="charts[0].data"
+              [type]="charts[0].type"
+              [options]="charts[0].options"
+            ></canvas>
+            <div *ngIf="!charts[0]" class="no-data">
+              <p>No data available</p>
+            </div>
+          </div>
+        </div>
 
-<!-- Charts layout (left: chart1, right: chart3, bottom: chart2 hidden by default) -->
-<div class="charts-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px;">
-  <div class="chart-card" cdkDropList [cdkDropListData]="charts" (cdkDropListDropped)="drop($event)">
-    <h3 style="margin:8px 0;">Chart 1: Grades average over time (per student)</h3>
-    <canvas baseChart *ngIf="charts[0]" [data]="charts[0].data" [type]="charts[0].type" [options]="charts[0].options"></canvas>
-  </div>
+        <!-- Chart 2 -->
+        <div class="chart-card" cdkDrag>
+          <h3 class="chart-title">{{ charts[1]?.title || 'Chart 2: Average Grade per Trainee' }}</h3>
+          <div class="chart-container">
+            <canvas
+              baseChart
+              *ngIf="charts[1]"
+              [data]="charts[1].data"
+              [type]="charts[1].type"
+              [options]="charts[1].options"
+            ></canvas>
+            <div *ngIf="!charts[1]" class="no-data">
+              <p>No data available</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <div class="chart-card" cdkDropList [cdkDropListData]="charts" (cdkDropListDropped)="drop($event)">
-    <h3 style="margin:8px 0;">Chart 3: Grades averages per subject</h3>
-    <canvas baseChart *ngIf="charts[1]" [data]="charts[1].data" [type]="charts[1].type" [options]="charts[1].options"></canvas>
-  </div>
-</div>
+      <!-- Hidden Chart (Chart 3) -->
+      <div class="hidden-chart-section">
+        <h3 class="chart-title">{{ hiddenChart?.title || 'Chart 3: Grades averages per subject' }}</h3>
+        <div class="chart-container">
+          <canvas
+            baseChart
+            *ngIf="hiddenChart"
+            [data]="hiddenChart.data"
+            [type]="hiddenChart.type"
+            [options]="hiddenChart.options"
+          ></canvas>
+          <div *ngIf="!hiddenChart" class="no-data">
+            <p>No data available</p>
+          </div>
+        </div>
+      </div>
 
-<!-- Bottom hidden chart (visible here for convenience; you can keep it visually "hidden" and swap with swapHiddenChart) -->
-<div style="margin:16px;">
-  <h3 style="margin:8px 0;">Chart 2: Students averages for chosen IDs</h3>
-  <canvas baseChart *ngIf="hiddenChart" [data]="hiddenChart.data" [type]="hiddenChart.type" [options]="hiddenChart.options"></canvas>
-</div>
-
-<div style="margin:16px; text-align:center;">
-  <button mat-raised-button color="accent" (click)="swapHiddenChart()">Swap Hidden Chart</button>
+      <!-- Swap Button -->
+      <div class="swap-button-container">
+        <button mat-raised-button color="accent" (click)="swapHiddenChart()">
+          <span>⇄</span> Swap Chart 2 with Hidden Chart
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
 </div>
