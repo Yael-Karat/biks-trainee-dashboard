@@ -27,6 +27,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+
 Chart.register(
   CategoryScale,
   LinearScale,
@@ -85,10 +86,6 @@ export class AnalysisComponent implements OnInit {
     this.dataService.trainees$.subscribe(data => {
       this.trainees = data;
       this.subjects = Array.from(new Set(data.map(t => t.subject)));
-
-      // Ensure filters exist
-      this.selectedTrainees = this.selectedTrainees || [];
-      this.selectedSubjects = this.selectedSubjects || [];
       setTimeout(() => this.updateCharts(), 50);
     });
   }
@@ -112,21 +109,19 @@ export class AnalysisComponent implements OnInit {
       ? this.selectedSubjects
       : this.subjects;
 
-    // === Chart 1: Grades over time (per trainee) ===
-    const uniqueDates = Array.from(
-      new Set(traineesToShow.map(t => t.date))
-    ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
+    // === Chart 1: Grades over time ===
+    const uniqueDates = Array.from(new Set(traineesToShow.map(t => t.date)))
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     const uniqueTraineeIds = Array.from(new Set(traineesToShow.map(t => t.id)));
 
     const chart1Datasets = uniqueTraineeIds.map(id => {
-      const traineeName = this.trainees.find(t => t.id === id)?.name || `Trainee ${id}`;
+      const trainee = this.trainees.find(t => t.id === id);
       const traineeData = traineesToShow
         .filter(t => t.id === id && subjectsToShow.includes(t.subject))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
       return {
-        label: traineeName,
+        label: trainee?.name || `Trainee ${id}`,
         data: uniqueDates.map(date => {
           const entry = traineeData.find(t => t.date === date);
           return entry ? entry.grade : null;
@@ -137,7 +132,7 @@ export class AnalysisComponent implements OnInit {
       };
     });
 
-    const chart1: any = {
+    const chart1 = {
       title: 'Grades Over Time (Per Trainee)',
       type: 'line' as ChartType,
       data: { labels: uniqueDates, datasets: chart1Datasets },
@@ -148,23 +143,60 @@ export class AnalysisComponent implements OnInit {
           y: { beginAtZero: true, max: 100, title: { display: true, text: 'Grade' } },
           x: { title: { display: true, text: 'Date' } }
         },
-        plugins: { legend: { position: 'bottom' as const }, title: { display: false } }
+        plugins: { legend: { position: 'bottom' }, title: { display: false } }
       } as ChartConfiguration['options']
     };
 
+    // === Chart 3 (Visible): Average grade per subject ===
+    const subjectAverages = subjectsToShow.map(subject => {
+      const grades = traineesToShow.filter(t => t.subject === subject).map(t => t.grade);
+      const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
+      return { subject, avg: Math.round(avg * 100) / 100 };
+    });
+
+    const chart3 = {
+      title: 'Grades Averages per Subject',
+      type: 'pie' as ChartType,
+      data: {
+        labels: subjectAverages.map(s => s.subject),
+        datasets: [
+          {
+            data: subjectAverages.map(s => s.avg),
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { position: 'right' } }
+      } as ChartConfiguration['options']
+    };
+
+    // === Hidden Chart (Chart 2): Average Grade per Trainee (for selected IDs) ===
     const traineeAverages = uniqueTraineeIds.map(id => {
       const trainee = this.trainees.find(t => t.id === id);
-      const grades = traineesToShow.filter(t => t.id === id && subjectsToShow.includes(t.subject)).map(t => t.grade);
+      const grades = traineesToShow
+        .filter(t => t.id === id && subjectsToShow.includes(t.subject))
+        .map(t => t.grade);
       const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
       return { name: trainee?.name || `Trainee ${id}`, avg: Math.round(avg * 100) / 100 };
     });
 
-    const chart2: any = {
-      title: 'Average Grade per Trainee',
+    this.hiddenChart = {
+      title: 'Average Grade per Trainee (Selected IDs)',
       type: 'bar' as ChartType,
       data: {
         labels: traineeAverages.map(t => t.name),
-        datasets: [{ label: 'Average Grade', data: traineeAverages.map(t => t.avg), backgroundColor: '#42A5F5', borderColor: '#1976D2', borderWidth: 1 }]
+        datasets: [
+          {
+            label: 'Average Grade',
+            data: traineeAverages.map(t => t.avg),
+            backgroundColor: '#42A5F5',
+            borderColor: '#1976D2',
+            borderWidth: 1
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -173,27 +205,11 @@ export class AnalysisComponent implements OnInit {
           y: { beginAtZero: true, max: 100, title: { display: true, text: 'Average Grade' } },
           x: { title: { display: true, text: 'Trainee' } }
         },
-        plugins: { legend: { display: true, position: 'bottom' as const } }
+        plugins: { legend: { display: true, position: 'bottom' } }
       } as ChartConfiguration['options']
     };
 
-    const subjectAverages = subjectsToShow.map(subject => {
-      const grades = traineesToShow.filter(t => t.subject === subject).map(t => t.grade);
-      const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
-      return { subject, avg: Math.round(avg * 100) / 100 };
-    });
-
-    this.hiddenChart = {
-      title: 'Average Grade per Subject',
-      type: 'pie' as ChartType,
-      data: {
-        labels: subjectAverages.map(s => s.subject),
-        datasets: [{ data: subjectAverages.map(s => s.avg), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] }]
-      },
-      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right' as const } } } as ChartConfiguration['options']
-    };
-
-    this.charts = [chart1, chart2];
+    this.charts = [chart1, chart3];
   }
 
   drop(event: CdkDragDrop<any[]>): void {
