@@ -102,18 +102,16 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
     try {
       this.chartDirectives?.forEach(d => {
         if (d && (d as any).chart) {
-          try { (d as any).chart.update(); } catch { /* ignore per-chart errors */ }
+          try { (d as any).chart.update(); } catch {}
         }
       });
-    } catch {
-      // ignore
-    }
+    } catch {}
   }
 
   updateCharts(): void {
     this.saveAnalysisState();
 
-    // ---------- Chart 1: Average Grades Over Time (per selected trainee) ----------
+    // ---------- Chart 1: Average Grades Over Time (unique per trainee ID) ----------
     let chart1: ChartConfig | null = null;
     if (this.selectedTrainees.length > 0) {
       // Filter only by selected trainee IDs
@@ -123,17 +121,22 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
         const uniqueDates = Array.from(new Set(traineesToShow.map(r => r.date)))
           .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-        const datasets = traineesToShow.map((trainee, idx) => {
-          const dataForTrainee = traineesToShow.filter(r => r.id === trainee.id);
+        const traineesById = Array.from(
+          new Map(traineesToShow.map(t => [t.id, t])).values()
+        );
+
+        const datasets = traineesById.map((trainee, idx) => {
+          const traineeRecords = traineesToShow.filter(r => r.id === trainee.id);
+
           const data = uniqueDates.map(date => {
-            const entries = dataForTrainee.filter(e => e.date === date);
+            const entries = traineeRecords.filter(e => e.date === date);
             if (!entries.length) return null;
             const avg = entries.reduce((s, e) => s + e.grade, 0) / entries.length;
             return Math.round(avg * 100) / 100;
           });
 
           return {
-            label: trainee.name,
+            label: `ID ${trainee.id}`,
             data,
             fill: false,
             borderColor: this.getColorByIndex(idx),
@@ -144,7 +147,7 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
         });
 
         chart1 = {
-          title: 'Average Grades Over Time (Per Student)',
+          title: 'Average Grades Over Time (Per Student ID)',
           type: 'line',
           data: { labels: uniqueDates, datasets: datasets as any },
           options: {
@@ -199,20 +202,24 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
 
     // ---------- Hidden Chart (average per trainee) ----------
     if (this.selectedTrainees.length > 0) {
-      const traineeAverages = this.trainees
-        .filter(t => this.selectedTrainees.includes(t.id))
-        .map((trainee, idx) => {
-          const grades = this.trainees.filter(r => r.id === trainee.id).map(r => r.grade);
-          const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
-          return { name: trainee.name, avg: Math.round(avg * 100) / 100 };
-        });
+      const traineeAverages = Array.from(
+        new Map(
+          this.trainees
+            .filter(t => this.selectedTrainees.includes(t.id))
+            .map(t => {
+              const grades = this.trainees.filter(r => r.id === t.id).map(r => r.grade);
+              const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
+              return [t.id, { id: t.id, avg: Math.round(avg * 100) / 100 }];
+            })
+        ).values()
+      );
 
       if (traineeAverages.length > 0) {
         this.hiddenChart = {
-          title: 'Average Grade per Student (Selected IDs)',
+          title: 'Average Grade per Student ID (Selected IDs)',
           type: 'bar',
           data: {
-            labels: traineeAverages.map(t => t.name),
+            labels: traineeAverages.map(t => `ID ${t.id}`),
             datasets: [{
               label: 'Average Grade',
               data: traineeAverages.map(t => t.avg),
@@ -226,7 +233,7 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
             maintainAspectRatio: true,
             scales: {
               y: { beginAtZero: true, max: 100, title: { display: true, text: 'Average Grade' } },
-              x: { title: { display: true, text: 'Student' } }
+              x: { title: { display: true, text: 'Student ID' } }
             },
             plugins: { legend: { display: false } }
           } as ChartConfiguration['options']
