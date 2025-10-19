@@ -74,6 +74,15 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
     this.dataService.trainees$.subscribe(data => {
       this.trainees = data ?? [];
       this.subjects = Array.from(new Set(this.trainees.map(t => t.subject)));
+
+      // ----------- Default "Show All" behavior -----------
+      if (!this.selectedTrainees.length) {
+        this.selectedTrainees = this.trainees.map(t => t.id);
+      }
+      if (!this.selectedSubjects.length) {
+        this.selectedSubjects = [...this.subjects];
+      }
+
       // slight delay to allow template to react before updateCharts
       setTimeout(() => this.updateCharts(), 50);
     });
