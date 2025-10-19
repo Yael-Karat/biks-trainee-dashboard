@@ -266,7 +266,6 @@ ng test
 ```
 
 Tests are executed via [Karma](https://karma-runner.github.io) and [Jasmine](https://jasmine.github.io).
-You can also add 2–3 example unit tests to demonstrate testing skills as per assignment instructions.
 
 ---
 
