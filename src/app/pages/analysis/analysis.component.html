@@ -18,7 +18,7 @@
                 Show All IDs
               </span>
               <span *ngIf="selectedTrainees.length > 0" class="selected-text">
-                {{ selectedTrainees.length }} ID(s) selected
+                {{ selectedTrainees.join(', ') }}
               </span>
             </mat-select-trigger>
             <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
@@ -35,9 +35,6 @@
             aria-label="Clear selection">
             <span style="font-size: 18px;">✕</span>
           </button>
-          <mat-hint *ngIf="selectedTrainees.length === 0">
-            Click to select specific IDs or leave empty to show all
-          </mat-hint>
         </mat-form-field>
 
         <!-- Subjects selector -->
@@ -53,7 +50,7 @@
                 Show All Subjects
               </span>
               <span *ngIf="selectedSubjects.length > 0" class="selected-text">
-                {{ selectedSubjects.length }} Subject(s) selected
+                {{ selectedSubjects.join(', ') }}
               </span>
             </mat-select-trigger>
             <mat-option *ngFor="let subject of subjects" [value]="subject">
@@ -70,9 +67,6 @@
             aria-label="Clear selection">
             <span style="font-size: 18px;">✕</span>
           </button>
-          <mat-hint *ngIf="selectedSubjects.length === 0">
-            Click to select specific subjects or leave empty to show all
-          </mat-hint>
         </mat-form-field>
       </div>
     </mat-card-content>
