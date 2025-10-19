@@ -7,6 +7,12 @@ interface DataState {
   pageSize: number;
 }
 
+interface AnalysisState {
+  traineeIds: number[];
+  subjects: string[];
+  currentTraineeIndex: number;
+}
+
 interface MonitorState {
   ids: number[];
   name: string;
@@ -16,6 +22,7 @@ interface MonitorState {
 
 interface AppState {
   data: DataState;
+  analysis: AnalysisState;
   monitor: MonitorState;
 }
 
@@ -25,6 +32,7 @@ export class StateService {
 
   private defaultState: AppState = {
     data: { filterValue: '', pageIndex: 0, pageSize: 10 },
+    analysis: { traineeIds: [], subjects: [], currentTraineeIndex: 0 },
     monitor: { ids: [], name: '', passed: true, failed: true }
   };
 
@@ -54,6 +62,16 @@ export class StateService {
 
   setDataState(partial: Partial<DataState>): void {
     this.state.data = { ...this.state.data, ...partial };
+    this.save();
+  }
+
+ /** ===================== ANALYSIS ===================== */ 
+  getAnalysisState(): AnalysisState {
+    return this.state.analysis;
+  }
+
+  setAnalysisState(partial: Partial<AnalysisState>): void {
+    this.state.analysis = { ...this.state.analysis, ...partial };
     this.save();
   }
 
