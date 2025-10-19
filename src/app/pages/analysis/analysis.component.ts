@@ -292,14 +292,20 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
       this.hiddenChart = null;
     }
 
-    // ----------------- Pick what to show in the two visible slots -----------------
-    // Prefer: chart1 (IDs/time) then chart3 (subjects) if both exist.
-    const slot0 = chart1 ?? chart3 ?? null;
-    const slot1 = (chart1 && chart3) ? chart3 : (chart1 && !chart3 ? null : (chart3 && !chart1 ? null : null));
+    // ---------- Preserve positions of visible slots ----------
+    const newCharts: (ChartConfig | null)[] = [...this.charts];
 
-    this.charts = [slot0, slot1];
+    // Update slot 0 only if chart1 exists
+    if (chart1) newCharts[0] = chart1;
+    else if (!newCharts[0] || newCharts[0] === this.hiddenChart) newCharts[0] = null;
 
-    // Detect and then update Chart instances after DOM render
+    // Update slot 1 only if chart3 exists
+    if (chart3) newCharts[1] = chart3;
+    else if (!newCharts[1] || newCharts[1] === this.hiddenChart) newCharts[1] = null;
+
+    this.charts = newCharts;
+
+    // Detect and then update chart instances after DOM render
     this.cdr.detectChanges();
     setTimeout(() => this.updateAllCharts(), 150);
   }
