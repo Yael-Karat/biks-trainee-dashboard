@@ -261,9 +261,9 @@ Then visit your live demo at:
 
 | Page              | Description                                         | Preview                                           |
 | ----------------- | --------------------------------------------------- | ------------------------------------------------- |
-| **Data Page**     | Trainee results with filtering and editable details | ![Data Page](./docs\screenshots\DataPage.png)         |
-| **Analysis Page** | Interactive charts for trainee analysis             | ![Analysis Page](./docs\screenshots\AnalysisPage.png) |
-| **Monitor Page**  | Pass/fail overview with filters                     | ![Monitor Page](./docs\screenshots/MonitorPage.png)   |
+| **Data Page**     | Trainee results with filtering and editable details | ![Data Page](./docs/screenshots/DataPage.png)         |
+| **Analysis Page** | Interactive charts for trainee analysis             | ![Analysis Page](./docs/screenshots/AnalysisPage.png) |
+| **Monitor Page**  | Pass/fail overview with filters                     | ![Monitor Page](./docs/screenshots/MonitorPage.png)   |
 
 ---
 
