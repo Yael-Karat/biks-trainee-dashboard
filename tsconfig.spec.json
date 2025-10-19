@@ -5,12 +5,11 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "module": "ES2020",
-    "types": [
-      "jasmine"
-    ],
+    "moduleResolution": "node",
+    "types": ["jasmine", "node"],
+    "allowJs": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "files": ["src/test.ts"],
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
 }
