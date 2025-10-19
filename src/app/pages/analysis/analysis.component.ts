@@ -9,40 +9,13 @@ import { MatOptionModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartType, ChartData, registerables } from 'chart.js';
+import { Chart, ChartConfiguration, ChartType, ChartData, registerables } from 'chart.js';
 import { DataService } from '../../services/data.service';
 import { StateService } from '../../services/state.service';
 import { Trainee } from '../../models/trainee';
 import { UniqueByIdPipe } from '../../pipes/unique-by-id.pipe';
 
 Chart.register(...registerables);
-
-import {
-  Chart,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-
-Chart.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
 
 interface ChartConfig {
   title: string;
