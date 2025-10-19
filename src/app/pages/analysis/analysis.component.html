@@ -116,19 +116,15 @@
       </div>
 
       <!-- Hidden Chart (Chart 2: Averages for chosen IDs) -->
-      <div class="hidden-chart-section">
-        <h3 class="chart-title">{{ hiddenChart?.title || 'Chart 2: Student averages for students with chosen ID' }}</h3>
+      <div *ngIf="hiddenChartVisible && hiddenChart" class="hidden-chart-section">
+        <h3 class="chart-title">{{ hiddenChart.title }}</h3>
         <div class="chart-container">
           <canvas
-            *ngIf="hiddenChart"
             baseChart
             [type]="hiddenChart.type"
             [data]="hiddenChart.data"
             [options]="hiddenChart.options"
           ></canvas>
-          <div *ngIf="!hiddenChart" class="no-data">
-            <p>No data available</p>
-          </div>
         </div>
       </div>
 
