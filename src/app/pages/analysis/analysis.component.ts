@@ -11,9 +11,9 @@ import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { DataService } from '../../services/data.service';
+import { StateService } from '../../services/state.service';
 import { Trainee } from '../../models/trainee';
 
-// Chart.js registration
 import {
   Chart,
   CategoryScale,
@@ -27,8 +27,18 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-
-Chart.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler);
+Chart.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 @Component({
   selector: 'app-analysis',
@@ -54,44 +64,51 @@ export class AnalysisComponent implements OnInit {
 
   selectedTrainees: number[] = [];
   selectedSubjects: string[] = [];
+  currentTraineeIndex = 0;
 
   charts: any[] = [];
   hiddenChart: any;
 
-  constructor(private dataService: DataService) {}
+  constructor(
+    private dataService: DataService,
+    private stateService: StateService
+  ) {}
 
   ngOnInit(): void {
-    // Restore previous state if exists
-    const savedState = localStorage.getItem('analysisFilters');
-    if (savedState) {
-      const { selectedTrainees, selectedSubjects } = JSON.parse(savedState);
-      this.selectedTrainees = selectedTrainees || [];
-      this.selectedSubjects = selectedSubjects || [];
-    }
+    // Restore saved analysis state from StateService
+    const saved = this.stateService.getAnalysisState();
+    this.selectedTrainees = saved.traineeIds || [];
+    this.selectedSubjects = saved.subjects || [];
+    this.currentTraineeIndex = saved.currentTraineeIndex || 0;
 
+    // Subscribe to trainees
     this.dataService.trainees$.subscribe(data => {
       this.trainees = data;
       this.subjects = Array.from(new Set(data.map(t => t.subject)));
 
-      // Ensure filters exist even if state was empty
+      // Ensure filters exist
       this.selectedTrainees = this.selectedTrainees || [];
       this.selectedSubjects = this.selectedSubjects || [];
-      setTimeout(() => {
-            this.updateCharts();
-          }, 50); // small delay ensures filters render first
-      });
+      setTimeout(() => this.updateCharts(), 50);
+    });
+  }
+
+  private saveAnalysisState(): void {
+    this.stateService.setAnalysisState({
+      traineeIds: this.selectedTrainees,
+      subjects: this.selectedSubjects,
+      currentTraineeIndex: this.currentTraineeIndex
+    });
   }
 
   updateCharts(): void {
-    // Save current state
-    this.saveFilterState();
+    this.saveAnalysisState();
 
-    // Filter data
-    const traineesToShow = this.selectedTrainees.length > 0
+    const traineesToShow = this.selectedTrainees.length
       ? this.trainees.filter(t => this.selectedTrainees.includes(t.id))
       : this.trainees;
 
-    const subjectsToShow = this.selectedSubjects.length > 0
+    const subjectsToShow = this.selectedSubjects.length
       ? this.selectedSubjects
       : this.subjects;
 
@@ -131,19 +148,13 @@ export class AnalysisComponent implements OnInit {
           y: { beginAtZero: true, max: 100, title: { display: true, text: 'Grade' } },
           x: { title: { display: true, text: 'Date' } }
         },
-        plugins: {
-          legend: { position: 'bottom' as const },
-          title: { display: false }
-        }
+        plugins: { legend: { position: 'bottom' as const }, title: { display: false } }
       } as ChartConfiguration['options']
     };
 
-    // === Chart 2: Average grade per trainee ===
     const traineeAverages = uniqueTraineeIds.map(id => {
       const trainee = this.trainees.find(t => t.id === id);
-      const grades = traineesToShow
-        .filter(t => t.id === id && subjectsToShow.includes(t.subject))
-        .map(t => t.grade);
+      const grades = traineesToShow.filter(t => t.id === id && subjectsToShow.includes(t.subject)).map(t => t.grade);
       const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
       return { name: trainee?.name || `Trainee ${id}`, avg: Math.round(avg * 100) / 100 };
     });
@@ -153,13 +164,7 @@ export class AnalysisComponent implements OnInit {
       type: 'bar' as ChartType,
       data: {
         labels: traineeAverages.map(t => t.name),
-        datasets: [{
-          label: 'Average Grade',
-          data: traineeAverages.map(t => t.avg),
-          backgroundColor: '#42A5F5',
-          borderColor: '#1976D2',
-          borderWidth: 1
-        }]
+        datasets: [{ label: 'Average Grade', data: traineeAverages.map(t => t.avg), backgroundColor: '#42A5F5', borderColor: '#1976D2', borderWidth: 1 }]
       },
       options: {
         responsive: true,
@@ -172,38 +177,27 @@ export class AnalysisComponent implements OnInit {
       } as ChartConfiguration['options']
     };
 
-    // === Hidden Chart: Average grade per subject ===
     const subjectAverages = subjectsToShow.map(subject => {
       const grades = traineesToShow.filter(t => t.subject === subject).map(t => t.grade);
       const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
       return { subject, avg: Math.round(avg * 100) / 100 };
     });
 
-    const hiddenChart: any = {
+    this.hiddenChart = {
       title: 'Average Grade per Subject',
       type: 'pie' as ChartType,
       data: {
         labels: subjectAverages.map(s => s.subject),
-        datasets: [{
-          data: subjectAverages.map(s => s.avg),
-          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40']
-        }]
+        datasets: [{ data: subjectAverages.map(s => s.avg), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: { legend: { position: 'right' as const } }
-      } as ChartConfiguration['options']
+      options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right' as const } } } as ChartConfiguration['options']
     };
 
     this.charts = [chart1, chart2];
-    this.hiddenChart = hiddenChart;
   }
 
   drop(event: CdkDragDrop<any[]>): void {
-    if (event.previousIndex !== event.currentIndex) {
-      moveItemInArray(this.charts, event.previousIndex, event.currentIndex);
-    }
+    if (event.previousIndex !== event.currentIndex) moveItemInArray(this.charts, event.previousIndex, event.currentIndex);
   }
 
   swapHiddenChart(): void {
@@ -211,7 +205,7 @@ export class AnalysisComponent implements OnInit {
     const temp = this.charts[1];
     this.charts[1] = this.hiddenChart;
     this.hiddenChart = temp;
-    this.saveFilterState();
+    this.saveAnalysisState();
   }
 
   clearIds(): void {
@@ -222,13 +216,6 @@ export class AnalysisComponent implements OnInit {
   clearSubjects(): void {
     this.selectedSubjects = [];
     this.updateCharts();
-  }
-
-  private saveFilterState(): void {
-    localStorage.setItem('analysisFilters', JSON.stringify({
-      selectedTrainees: this.selectedTrainees,
-      selectedSubjects: this.selectedSubjects
-    }));
   }
 
   private getRandomColor(): string {
