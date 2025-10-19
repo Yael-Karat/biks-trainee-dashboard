@@ -13,6 +13,7 @@ import { ChartConfiguration, ChartType, ChartData, registerables } from 'chart.j
 import { DataService } from '../../services/data.service';
 import { StateService } from '../../services/state.service';
 import { Trainee } from '../../models/trainee';
+import { UniqueByIdPipe } from '../../pipes/unique-by-id.pipe';
 
 Chart.register(...registerables);
 
@@ -65,7 +66,8 @@ interface ChartConfig {
     MatOptionModule,
     MatButtonModule,
     DragDropModule,
-    BaseChartDirective
+    BaseChartDirective,
+    UniqueByIdPipe
   ]
 })
 export class AnalysisComponent implements OnInit, AfterViewInit {
@@ -142,14 +144,17 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
       this.charts = [null, null];
       this.hiddenChart = null;
       this.cdr.detectChanges();
-      // Update chart instances after DOM settled
       setTimeout(() => this.updateAllCharts(), 100);
       return;
     }
 
-    const traineesToShow = this.selectedTrainees.length
+    // Filter trainees according to selected IDs (if any)
+    let traineesToShow = this.selectedTrainees.length
       ? this.trainees.filter(t => this.selectedTrainees.includes(t.id))
-      : this.trainees;
+      : [...this.trainees];
+
+    // Deduplicate by ID so each trainee appears once
+    traineesToShow = Array.from(new Map(traineesToShow.map(t => [t.id, t])).values());
 
     const subjectsToShow = this.selectedSubjects.length
       ? this.selectedSubjects
@@ -158,17 +163,13 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
     // ---------- Chart 1: Average Grades Over Time (per selected trainee) ----------
     let chart1: ChartConfig | null = null;
     if (this.selectedTrainees.length > 0) {
-      // use only records that match selected subjects too
       const filteredRecords = traineesToShow.filter(r => subjectsToShow.includes(r.subject));
       if (filteredRecords.length > 0) {
         const uniqueDates = Array.from(new Set(filteredRecords.map(r => r.date)))
           .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-        const uniqueTraineeIds = Array.from(new Set(this.selectedTrainees));
-
-        const datasets = uniqueTraineeIds.map((id, idx) => {
-          const traineeName = this.trainees.find(t => t.id === id)?.name || `Trainee ${id}`;
-          const dataForTrainee = filteredRecords.filter(r => r.id === id);
+        const datasets = traineesToShow.map((trainee, idx) => {
+          const dataForTrainee = filteredRecords.filter(r => r.id === trainee.id);
 
           const data = uniqueDates.map(date => {
             const entries = dataForTrainee.filter(e => e.date === date);
@@ -178,7 +179,7 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
           });
 
           return {
-            label: traineeName,
+            label: trainee.name,
             data,
             fill: false,
             borderColor: this.getColorByIndex(idx),
@@ -188,15 +189,11 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
           };
         });
 
-        // Guard: do not create chart1 with zero labels
         if (uniqueDates.length > 0 && datasets.length > 0) {
           chart1 = {
             title: 'Average Grades Over Time (Per Student)',
             type: 'line',
-            data: {
-              labels: uniqueDates,
-              datasets: datasets as any
-            },
+            data: { labels: uniqueDates, datasets: datasets as any },
             options: {
               responsive: true,
               maintainAspectRatio: true,
@@ -211,7 +208,7 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
       }
     }
 
-    // ---------- Chart 3: Average Grade per Subject (when subjects are selected) ----------
+    // ---------- Chart 3: Average Grade per Subject ----------
     let chart3: ChartConfig | null = null;
     if (this.selectedSubjects.length > 0) {
       const subjectAverages = this.selectedSubjects.map(subject => {
@@ -226,15 +223,13 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
           type: 'bar',
           data: {
             labels: subjectAverages.map(s => s.subject),
-            datasets: [
-              {
-                label: 'Average Grade',
-                data: subjectAverages.map(s => s.avg),
-                backgroundColor: subjectAverages.map((_, i) => this.getColorByIndex(i)),
-                borderColor: subjectAverages.map((_, i) => this.getDarkerColorByIndex(i)),
-                borderWidth: 1
-              }
-            ]
+            datasets: [{
+              label: 'Average Grade',
+              data: subjectAverages.map(s => s.avg),
+              backgroundColor: subjectAverages.map((_, i) => this.getColorByIndex(i)),
+              borderColor: subjectAverages.map((_, i) => this.getDarkerColorByIndex(i)),
+              borderWidth: 1
+            }]
           },
           options: {
             responsive: true,
@@ -251,12 +246,10 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
 
     // ---------- Hidden Chart (average per trainee) ----------
     if (this.selectedTrainees.length > 0) {
-      const ids = Array.from(new Set(this.selectedTrainees));
-      const traineeAverages = ids.map(id => {
-        const traineeName = this.trainees.find(t => t.id === id)?.name || `Trainee ${id}`;
-        const grades = traineesToShow.filter(r => r.id === id).map(r => r.grade);
+      const traineeAverages = traineesToShow.map((trainee, idx) => {
+        const grades = traineesToShow.filter(r => r.id === trainee.id).map(r => r.grade);
         const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
-        return { name: traineeName, avg: Math.round(avg * 100) / 100 };
+        return { name: trainee.name, avg: Math.round(avg * 100) / 100 };
       });
 
       if (traineeAverages.length > 0) {
@@ -265,15 +258,13 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
           type: 'bar',
           data: {
             labels: traineeAverages.map(t => t.name),
-            datasets: [
-              {
-                label: 'Average Grade',
-                data: traineeAverages.map(t => t.avg),
-                backgroundColor: traineeAverages.map((_, i) => this.getColorByIndex(i)),
-                borderColor: traineeAverages.map((_, i) => this.getDarkerColorByIndex(i)),
-                borderWidth: 1
-              }
-            ]
+            datasets: [{
+              label: 'Average Grade',
+              data: traineeAverages.map(t => t.avg),
+              backgroundColor: traineeAverages.map((_, i) => this.getColorByIndex(i)),
+              borderColor: traineeAverages.map((_, i) => this.getDarkerColorByIndex(i)),
+              borderWidth: 1
+            }]
           },
           options: {
             responsive: true,
@@ -295,17 +286,14 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
     // ---------- Preserve positions of visible slots ----------
     const newCharts: (ChartConfig | null)[] = [...this.charts];
 
-    // Update slot 0 only if chart1 exists
     if (chart1) newCharts[0] = chart1;
     else if (!newCharts[0] || newCharts[0] === this.hiddenChart) newCharts[0] = null;
 
-    // Update slot 1 only if chart3 exists
     if (chart3) newCharts[1] = chart3;
     else if (!newCharts[1] || newCharts[1] === this.hiddenChart) newCharts[1] = null;
 
     this.charts = newCharts;
 
-    // Detect and then update chart instances after DOM render
     this.cdr.detectChanges();
     setTimeout(() => this.updateAllCharts(), 150);
   }
