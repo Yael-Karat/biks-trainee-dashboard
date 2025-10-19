@@ -78,6 +78,8 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
   selectedSubjects: string[] = [];
   currentTraineeIndex = 0;
 
+  hiddenChartVisible = false;
+
   // two visible slots (chart0, chart1). Use null when slot is empty.
   charts: (ChartConfig | null)[] = [null, null];
   hiddenChart: ChartConfig | null = null;
@@ -308,11 +310,16 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
 
   swapHiddenChart(): void {
     if (!this.hiddenChart) return;
+
     // swap with rightmost visible slot (index 1) if present, otherwise with slot 0
     const swapIndex = this.charts[1] ? 1 : 0;
     const tmp = this.charts[swapIndex];
     this.charts[swapIndex] = this.hiddenChart;
     this.hiddenChart = tmp;
+
+    // show hidden chart only after swapping
+    this.hiddenChartVisible = !!this.charts.includes(this.hiddenChart);
+
     this.saveAnalysisState();
     this.cdr.detectChanges();
     setTimeout(() => this.updateAllCharts(), 150);
