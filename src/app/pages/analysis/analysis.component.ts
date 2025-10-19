@@ -140,39 +140,18 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
   updateCharts(): void {
     this.saveAnalysisState();
 
-    // If no selections at all -> show "No data available" (we keep both slots null)
-    const noSelection = this.selectedTrainees.length === 0 && this.selectedSubjects.length === 0;
-    if (noSelection) {
-      this.charts = [null, null];
-      this.hiddenChart = null;
-      this.cdr.detectChanges();
-      setTimeout(() => this.updateAllCharts(), 100);
-      return;
-    }
-
-    // Filter trainees according to selected IDs (if any)
-    let traineesToShow = this.selectedTrainees.length
-      ? this.trainees.filter(t => this.selectedTrainees.includes(t.id))
-      : [...this.trainees];
-
-    // Deduplicate by ID so each trainee appears once
-    traineesToShow = Array.from(new Map(traineesToShow.map(t => [t.id, t])).values());
-
-    const subjectsToShow = this.selectedSubjects.length
-      ? this.selectedSubjects
-      : this.subjects;
-
     // ---------- Chart 1: Average Grades Over Time (per selected trainee) ----------
     let chart1: ChartConfig | null = null;
     if (this.selectedTrainees.length > 0) {
-      const filteredRecords = traineesToShow.filter(r => subjectsToShow.includes(r.subject));
-      if (filteredRecords.length > 0) {
-        const uniqueDates = Array.from(new Set(filteredRecords.map(r => r.date)))
+      // Filter only by selected trainee IDs
+      const traineesToShow = this.trainees.filter(t => this.selectedTrainees.includes(t.id));
+
+      if (traineesToShow.length > 0) {
+        const uniqueDates = Array.from(new Set(traineesToShow.map(r => r.date)))
           .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
         const datasets = traineesToShow.map((trainee, idx) => {
-          const dataForTrainee = filteredRecords.filter(r => r.id === trainee.id);
-
+          const dataForTrainee = traineesToShow.filter(r => r.id === trainee.id);
           const data = uniqueDates.map(date => {
             const entries = dataForTrainee.filter(e => e.date === date);
             if (!entries.length) return null;
@@ -191,35 +170,34 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
           };
         });
 
-        if (uniqueDates.length > 0 && datasets.length > 0) {
-          chart1 = {
-            title: 'Average Grades Over Time (Per Student)',
-            type: 'line',
-            data: { labels: uniqueDates, datasets: datasets as any },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              scales: {
-                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Average Grade' } },
-                x: { title: { display: true, text: 'Date' } }
-              },
-              plugins: { legend: { position: 'bottom' } }
-            } as ChartConfiguration['options']
-          };
-        }
+        chart1 = {
+          title: 'Average Grades Over Time (Per Student)',
+          type: 'line',
+          data: { labels: uniqueDates, datasets: datasets as any },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+              y: { beginAtZero: true, max: 100, title: { display: true, text: 'Average Grade' } },
+              x: { title: { display: true, text: 'Date' } }
+            },
+            plugins: { legend: { position: 'bottom' } }
+          } as ChartConfiguration['options']
+        };
       }
     }
 
     // ---------- Chart 3: Average Grade per Subject ----------
     let chart3: ChartConfig | null = null;
     if (this.selectedSubjects.length > 0) {
+      // Filter only by selected subjects
       const subjectAverages = this.selectedSubjects.map(subject => {
-        const grades = traineesToShow.filter(r => r.subject === subject).map(r => r.grade);
+        const grades = this.trainees.filter(r => r.subject === subject).map(r => r.grade);
         const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
         return { subject, avg: Math.round(avg * 100) / 100 };
       });
 
-      if (subjectAverages.length > 0 && subjectAverages.some(s => s.avg !== null)) {
+      if (subjectAverages.length > 0) {
         chart3 = {
           title: 'Average Grades per Subject',
           type: 'bar',
@@ -248,11 +226,13 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
 
     // ---------- Hidden Chart (average per trainee) ----------
     if (this.selectedTrainees.length > 0) {
-      const traineeAverages = traineesToShow.map((trainee, idx) => {
-        const grades = traineesToShow.filter(r => r.id === trainee.id).map(r => r.grade);
-        const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
-        return { name: trainee.name, avg: Math.round(avg * 100) / 100 };
-      });
+      const traineeAverages = this.trainees
+        .filter(t => this.selectedTrainees.includes(t.id))
+        .map((trainee, idx) => {
+          const grades = this.trainees.filter(r => r.id === trainee.id).map(r => r.grade);
+          const avg = grades.length ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
+          return { name: trainee.name, avg: Math.round(avg * 100) / 100 };
+        });
 
       if (traineeAverages.length > 0) {
         this.hiddenChart = {
@@ -286,15 +266,8 @@ export class AnalysisComponent implements OnInit, AfterViewInit {
     }
 
     // ---------- Preserve positions of visible slots ----------
-    const newCharts: (ChartConfig | null)[] = [...this.charts];
-
-    if (chart1) newCharts[0] = chart1;
-    else if (!newCharts[0] || newCharts[0] === this.hiddenChart) newCharts[0] = null;
-
-    if (chart3) newCharts[1] = chart3;
-    else if (!newCharts[1] || newCharts[1] === this.hiddenChart) newCharts[1] = null;
-
-    this.charts = newCharts;
+    this.charts[0] = chart1;
+    this.charts[1] = chart3;
 
     this.cdr.detectChanges();
     setTimeout(() => this.updateAllCharts(), 150);
