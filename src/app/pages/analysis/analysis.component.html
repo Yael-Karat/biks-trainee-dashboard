@@ -6,35 +6,38 @@
       <div class="filters-row">
         <!-- IDs selector -->
         <mat-form-field class="filter-field ids-field" appearance="outline">
-          <mat-label>Trainee IDs</mat-label>
-          <mat-select 
-            [(ngModel)]="selectedTrainees" 
-            multiple 
-            (selectionChange)="updateCharts()"
-            placeholder="Select IDs to filter">
-            <mat-select-trigger>
-              <span *ngIf="selectedTrainees.length === 0" class="placeholder-text">
-                Show All IDs
-              </span>
-              <span *ngIf="selectedTrainees.length > 0" class="selected-text">
-                {{ selectedTrainees.join(', ') }}
-              </span>
-            </mat-select-trigger>
-            <mat-option *ngFor="let trainee of trainees" [value]="trainee.id">
-              ID: {{ trainee.id }} - {{ trainee.name }}
-            </mat-option>
-          </mat-select>
-          <button 
-            mat-icon-button 
-            matSuffix 
-            *ngIf="selectedTrainees.length > 0"
-            (click)="clearIds(); $event.stopPropagation()"
-            type="button"
-            title="Clear all selections"
-            aria-label="Clear selection">
-            <span style="font-size: 18px;">✕</span>
-          </button>
-        </mat-form-field>
+        <mat-label>Trainee IDs</mat-label>
+        <mat-select 
+          [(ngModel)]="selectedTrainees" 
+          multiple 
+          (selectionChange)="updateCharts()"
+          placeholder="Select IDs to filter">
+          <mat-select-trigger>
+            <span *ngIf="selectedTrainees.length === 0" class="placeholder-text">
+              Show All IDs
+            </span>
+            <span *ngIf="selectedTrainees.length > 0" class="selected-text">
+              {{ selectedTrainees.join(', ') }}
+            </span>
+          </mat-select-trigger>
+          <!-- Deduplicate trainees by ID -->
+          <mat-option 
+            *ngFor="let trainee of trainees | uniqueById" 
+            [value]="trainee.id">
+            ID: {{ trainee.id }} - {{ trainee.name }}
+          </mat-option>
+        </mat-select>
+        <button 
+          mat-icon-button 
+          matSuffix 
+          *ngIf="selectedTrainees.length > 0"
+          (click)="clearIds(); $event.stopPropagation()"
+          type="button"
+          title="Clear all selections"
+          aria-label="Clear selection">
+          <span style="font-size: 18px;">✕</span>
+        </button>
+      </mat-form-field>
 
         <!-- Subjects selector -->
         <mat-form-field class="filter-field subjects-field" appearance="outline">
