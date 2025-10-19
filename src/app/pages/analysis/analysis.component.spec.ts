@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { AnalysisComponent } from './analysis.component';
 import { DataService } from '../../services/data.service';
 import { of } from 'rxjs';
@@ -12,7 +13,7 @@ describe('AnalysisComponent', () => {
     mockDataService = jasmine.createSpyObj('DataService', ['trainees$'], { trainees$: of([]) });
 
     await TestBed.configureTestingModule({
-      imports: [AnalysisComponent],
+      imports: [AnalysisComponent, RouterTestingModule],
       providers: [{ provide: DataService, useValue: mockDataService }]
     }).compileComponents();
 
