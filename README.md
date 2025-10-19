@@ -63,15 +63,15 @@ biks-trainee-dashboard/
 │       └── MonitorPage.png                # Screenshot of the Monitor page
 │
 ├── public/
-│   └── favicon.ico                         # Application icon
+│   └── favicon.ico                        # Application icon
 │
 ├── src/
 │   ├── app/
 │   │   ├── material/
-│   │   │   └── material.module.ts          # Centralized Angular Material imports/exports
+│   │   │   └── material.module.ts         # Centralized Angular Material imports/exports
 │   │   │
 │   │   ├── models/
-│   │   │   └── trainee.ts                  # TypeScript interface for Trainee objects
+│   │   │   └── trainee.ts                 # TypeScript interface for Trainee objects
 │   │   │
 │   │   ├── pages/
 │   │   │   ├── analysis/
@@ -94,53 +94,55 @@ biks-trainee-dashboard/
 │   │   │       ├── monitor.component.spec.ts # Unit tests for Monitor component
 │   │   │       └── monitor.component.ts    # Logic for trainee performance monitoring
 │   │   │
-│   │   ├── pages-module.ts                  # Module definition for all app pages
-│   │   ├── pages-routing-module.ts          # Routing configuration for pages
+│   │   ├── pages-module.ts                 # Module definition for all app pages
+│   │   ├── pages-routing-module.ts         # Routing configuration for pages
 │   │   │
 │   │   ├── services/
-│   │   │   ├── data.service.ts              # Data management service using RxJS BehaviorSubject
-│   │   │   └── state.service.ts             # Service for persisting user selection state
+│   │   │   ├── data.service.ts             # Data management service using RxJS BehaviorSubject
+│   │   │   └── state.service.ts            # Service for persisting user selection state
 │   │   │
 │   │   ├── pipes/
-│   │   │   └── unique-by-id.pipe.ts        # Pipe to filter unique items by ID
+│   │   │   └── unique-by-id.pipe.ts       # Pipe to filter unique items by ID
 │   │   │
 │   │   ├── validators/
-│   │   │   └── israeli-id.directive.ts     # Directive to validate Israeli ID numbers
+│   │   │   └── israeli-id.directive.ts    # Directive to validate Israeli ID numbers
 │   │   │
 │   │   ├── shared/
 │   │   │   ├── footer/
-│   │   │   │   ├── footer.html             # Footer template
-│   │   │   │   ├── footer.scss             # Footer styles
-│   │   │   │   ├── footer.spec.ts          # Footer component tests
-│   │   │   │   └── footer.ts               # Footer component logic
+│   │   │   │   ├── footer.html            # Footer template
+│   │   │   │   ├── footer.scss            # Footer styles
+│   │   │   │   ├── footer.spec.ts         # Footer component tests
+│   │   │   │   └── footer.ts              # Footer component logic
 │   │   │   │
 │   │   │   └── header/
-│   │   │       ├── header.html             # Header template
-│   │   │       ├── header.scss             # Header styles
-│   │   │       ├── header.spec.ts          # Header component tests
-│   │   │       └── header.ts               # Header component logic
+│   │   │       ├── header.html            # Header template
+│   │   │       ├── header.scss            # Header styles
+│   │   │       ├── header.spec.ts         # Header component tests
+│   │   │       └── header.ts              # Header component logic
 │   │   │
-│   │   ├── app.config.ts                    # Global configuration & providers
-│   │   ├── app.html                         # Root app HTML structure
-│   │   ├── app.routes.ts                    # Application-wide route definitions
-│   │   ├── app.scss                         # Global styles
-│   │   ├── app.spec.ts                      # Unit tests for main app component
-│   │   └── app.ts                           # Root component that bootstraps the application
+│   │   ├── app.component.ts               # Root Angular component; bootstraps the app
+│   │   ├── app.component.html             # Main app layout (router outlet + header/footer)
+│   │   ├── app.component.scss             # Global layout & theme styles
+│   │   ├── app.config.ts                  # Global configuration & app-wide providers
+│   │   ├── app.routes.ts                  # Application-wide route definitions
+│   │   ├── app.spec.ts                    # Unit tests for main app component
 │   │
-│   ├── index.html                           # Main HTML file loaded at runtime
-│   ├── main.ts                              # Application entry point (bootstrap logic)
-│   └── styles.scss                          # Global SCSS styles shared across the app
+│   ├── index.html                         # Main HTML file loaded at runtime
+│   ├── main.ts                            # Application entry point (bootstraps Angular app)
+│   ├── styles.scss                        # Global SCSS styles shared across the app
+│   └── test.ts                            # Entry point for running Karma + Jasmine unit tests
 │
-├── .editorconfig                            # Coding style configuration
-├── .gitignore                               # Files and folders to ignore in Git
-├── .hintrc                                  # Linting and HTML hinting configuration
-├── angular.json                             # Angular workspace and build configuration
-├── package-lock.json                        # Locked dependency versions
-├── package.json                             # Project dependencies, scripts, and metadata
-├── README.md                                # Project documentation file
-├── tsconfig.app.json                        # TypeScript configuration for the app source files
-├── tsconfig.json                            # Base TypeScript configuration
-└── tsconfig.spec.json                       # TypeScript configuration for testing
+├── .editorconfig                           # Coding style configuration
+├── .gitignore                              # Files and folders to ignore in Git
+├── .hintrc                                 # Linting and HTML hinting configuration
+├── angular.json                            # Angular workspace and build configuration
+├── karma.conf.js                           # Karma test runner configuration (browsers, reporters, etc.)
+├── package-lock.json                       # Locked dependency versions
+├── package.json                            # Project dependencies, scripts, and metadata
+├── README.md                               # Project documentation file
+├── tsconfig.app.json                       # TypeScript configuration for app source files
+├── tsconfig.json                           # Base TypeScript configuration
+└── tsconfig.spec.json                      # TypeScript configuration for testing
 ```
 
 ---
