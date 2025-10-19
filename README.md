@@ -56,50 +56,75 @@ The project follows Angular’s component-driven structure and modular architect
 ```bash
 
 biks-trainee-dashboard/
+├── docs/
+│   └── screenshots/                       # Documentation images for README or reports
+│       ├── AnalysisPage.png               # Screenshot of the Analysis page
+│       ├── DataPage.png                   # Screenshot of the Data page
+│       └── MonitorPage.png                # Screenshot of the Monitor page
+│
 ├── public/
-│   └── favicon.ico                          # Application icon
+│   └── favicon.ico                         # Application icon
 │
 ├── src/
 │   ├── app/
 │   │   ├── material/
-│   │   │   └── material.module.ts           # Centralized Angular Material imports and exports
+│   │   │   └── material.module.ts          # Centralized Angular Material imports/exports
 │   │   │
 │   │   ├── models/
-│   │   │   └── trainee.ts                   # TypeScript interface for Trainee objects
+│   │   │   └── trainee.ts                  # TypeScript interface for Trainee objects
 │   │   │
-│   │   ├── pages/                           # Main feature pages of the SPA
+│   │   ├── pages/
 │   │   │   ├── analysis/
-│   │   │   │   ├── analysis.component.html  # HTML template for the Analysis page
-│   │   │   │   ├── analysis.component.scss  # Styling for the Analysis page
-│   │   │   │   ├── analysis.component.spec.ts # Unit tests for the Analysis component
-│   │   │   │   └── analysis.component.ts    # Logic and behavior for charts and data analytics
+│   │   │   │   ├── analysis.component.html # Template for Analysis page (charts & filters)
+│   │   │   │   ├── analysis.component.scss # Styles for Analysis page
+│   │   │   │   ├── analysis.component.spec.ts # Unit tests for Analysis component
+│   │   │   │   └── analysis.component.ts   # Chart logic, filtering, and state management
 │   │   │   │
 │   │   │   ├── data/
-│   │   │   │   ├── data.component.html      # HTML for the Data page (table, filters, details panel)
-│   │   │   │   ├── data.component.scss      # Styling for Data page
-│   │   │   │   ├── data.component.spec.ts   # Unit tests for the Data component
-│   │   │   │   └── data.component.ts        # Logic for managing trainee data and filters
+│   │   │   │   ├── data.component.html     # Template for Data page (table, filters)
+│   │   │   │   ├── data.component.scss     # Styles for Data page
+│   │   │   │   ├── data.component.spec.ts  # Unit tests for Data component
+│   │   │   │   ├── data.component.ts       # Logic for managing trainees & filters
+│   │   │   │   ├── trainee-details-dialog.component.html # Dialog template for trainee details
+│   │   │   │   └── trainee-details-dialog.component.ts   # Logic for trainee detail modal
 │   │   │   │
 │   │   │   └── monitor/
-│   │   │       ├── monitor.component.html   # HTML for the Monitor page (pass/fail view)
-│   │   │       ├── monitor.component.scss   # Styling for Monitor page
-│   │   │       ├── monitor.component.spec.ts# Unit tests for the Monitor component
-│   │   │       └── monitor.component.ts     # Logic for trainee performance monitoring
+│   │   │       ├── monitor.component.html  # Template for Monitor page (pass/fail view)
+│   │   │       ├── monitor.component.scss  # Styles for Monitor page
+│   │   │       ├── monitor.component.spec.ts # Unit tests for Monitor component
+│   │   │       └── monitor.component.ts    # Logic for trainee performance monitoring
 │   │   │
 │   │   ├── pages-module.ts                  # Module definition for all app pages
 │   │   ├── pages-routing-module.ts          # Routing configuration for pages
 │   │   │
 │   │   ├── services/
-│   │   │   └── data.service.ts              # Data management service using RxJS BehaviorSubject
+│   │   │   ├── data.service.ts              # Data management service using RxJS BehaviorSubject
+│   │   │   └── state.service.ts             # Service for persisting user selection state
+│   │   │
+│   │   ├── pipes/
+│   │   │   └── unique-by-id.pipe.ts        # Pipe to filter unique items by ID
 │   │   │
 │   │   ├── validators/
-│   │   │   └── israeli-id.directive.ts      # Custom Angular directive for validating Israeli ID 
+│   │   │   └── israeli-id.directive.ts     # Directive to validate Israeli ID numbers
 │   │   │
-│   │   ├── app.config.ts                    # Global configuration and providers setup
+│   │   ├── shared/
+│   │   │   ├── footer/
+│   │   │   │   ├── footer.html             # Footer template
+│   │   │   │   ├── footer.scss             # Footer styles
+│   │   │   │   ├── footer.spec.ts          # Footer component tests
+│   │   │   │   └── footer.ts               # Footer component logic
+│   │   │   │
+│   │   │   └── header/
+│   │   │       ├── header.html             # Header template
+│   │   │       ├── header.scss             # Header styles
+│   │   │       ├── header.spec.ts          # Header component tests
+│   │   │       └── header.ts               # Header component logic
+│   │   │
+│   │   ├── app.config.ts                    # Global configuration & providers
 │   │   ├── app.html                         # Root app HTML structure
 │   │   ├── app.routes.ts                    # Application-wide route definitions
-│   │   ├── app.scss                         # Global app styling
-│   │   ├── app.spec.ts                      # Unit tests for the main app component
+│   │   ├── app.scss                         # Global styles
+│   │   ├── app.spec.ts                      # Unit tests for main app component
 │   │   └── app.ts                           # Root component that bootstraps the application
 │   │
 │   ├── index.html                           # Main HTML file loaded at runtime
@@ -271,8 +296,6 @@ Then visit your live demo at:
 
 A hosted version of the project is available at:
 🔗 **[Live Demo – Biks Trainee Dashboard](https://yael-karat.github.io/biks-trainee-dashboard/)**
-
-*(If not yet published, follow the [Deployment](#-deployment-github-pages) section above to make it live.)*
 
 ---
 
