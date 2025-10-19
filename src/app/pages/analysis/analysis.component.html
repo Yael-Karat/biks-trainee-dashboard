@@ -82,10 +82,10 @@
           <h3 class="chart-title">{{ charts[0]?.title || 'Chart 1: Grades over time (per student)' }}</h3>
           <div class="chart-container">
             <canvas
-              baseChart
               *ngIf="charts[0]"
-              [data]="charts[0].data"
+              baseChart
               [type]="charts[0].type"
+              [data]="charts[0].data"
               [options]="charts[0].options"
             ></canvas>
             <div *ngIf="!charts[0]" class="no-data">
@@ -99,10 +99,10 @@
           <h3 class="chart-title">{{ charts[1]?.title || 'Chart 3: Grades averages per subject' }}</h3>
           <div class="chart-container">
             <canvas
-              baseChart
               *ngIf="charts[1]"
-              [data]="charts[1].data"
+              baseChart
               [type]="charts[1].type"
+              [data]="charts[1].data"
               [options]="charts[1].options"
             ></canvas>
             <div *ngIf="!charts[1]" class="no-data">
@@ -118,10 +118,10 @@
         <h3 class="chart-title">{{ hiddenChart?.title || 'Chart 2: Student averages for students with chosen ID' }}</h3>
         <div class="chart-container">
           <canvas
-            baseChart
             *ngIf="hiddenChart"
-            [data]="hiddenChart.data"
+            baseChart
             [type]="hiddenChart.type"
+            [data]="hiddenChart.data"
             [options]="hiddenChart.options"
           ></canvas>
           <div *ngIf="!hiddenChart" class="no-data">
@@ -132,7 +132,11 @@
 
       <!-- Swap Button -->
       <div class="swap-button-container">
-        <button mat-raised-button color="accent" (click)="swapHiddenChart()">
+        <button 
+          mat-raised-button 
+          color="accent" 
+          (click)="swapHiddenChart()"
+          [disabled]="!hiddenChart || !charts[1]">
           <span>⇄</span> Swap Chart 3 with Hidden Chart 2
         </button>
       </div>
