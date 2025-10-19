@@ -94,9 +94,9 @@
           </div>
         </div>
 
-        <!-- Chart 2 -->
+        <!-- Chart 3 (formerly Chart 2 visible) -->
         <div class="chart-card" cdkDrag>
-          <h3 class="chart-title">{{ charts[1]?.title || 'Chart 2: Average Grade per Trainee' }}</h3>
+          <h3 class="chart-title">{{ charts[1]?.title || 'Chart 3: Grades averages per subject' }}</h3>
           <div class="chart-container">
             <canvas
               baseChart
@@ -110,11 +110,12 @@
             </div>
           </div>
         </div>
+
       </div>
 
-      <!-- Hidden Chart (Chart 3) -->
+      <!-- Hidden Chart (Chart 2: Averages for chosen IDs) -->
       <div class="hidden-chart-section">
-        <h3 class="chart-title">{{ hiddenChart?.title || 'Chart 3: Grades averages per subject' }}</h3>
+        <h3 class="chart-title">{{ hiddenChart?.title || 'Chart 2: Student averages for students with chosen ID' }}</h3>
         <div class="chart-container">
           <canvas
             baseChart
@@ -132,7 +133,7 @@
       <!-- Swap Button -->
       <div class="swap-button-container">
         <button mat-raised-button color="accent" (click)="swapHiddenChart()">
-          <span>⇄</span> Swap Chart 2 with Hidden Chart
+          <span>⇄</span> Swap Chart 3 with Hidden Chart 2
         </button>
       </div>
     </mat-card-content>
