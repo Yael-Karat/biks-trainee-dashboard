@@ -261,11 +261,9 @@ Then visit your live demo at:
 
 | Page              | Description                                         | Preview                                           |
 | ----------------- | --------------------------------------------------- | ------------------------------------------------- |
-| **Data Page**     | Trainee results with filtering and editable details | ![Data Page](./screenshots/data-page.png)         |
-| **Analysis Page** | Interactive charts for trainee analysis             | ![Analysis Page](./screenshots/analysis-page.png) |
-| **Monitor Page**  | Pass/fail overview with filters                     | ![Monitor Page](./screenshots/monitor-page.png)   |
-
-> *(Place your actual screenshots in a `/screenshots` folder within the repo.)*
+| **Data Page**     | Trainee results with filtering and editable details | ![Data Page](./docs\screenshots\DataPage.png)         |
+| **Analysis Page** | Interactive charts for trainee analysis             | ![Analysis Page](./docs\screenshots\AnalysisPage.png) |
+| **Monitor Page**  | Pass/fail overview with filters                     | ![Monitor Page](./docs\screenshots/MonitorPage.png)   |
 
 ---
 
