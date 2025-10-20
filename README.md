@@ -19,7 +19,6 @@ This app was built using **Angular 20**, **Angular Material Design**, and **Type
 - [Running the Project](#-running-the-project)
 - [Build Instructions](#️-build-instructions)
 - [Testing](#-testing)
-- [Deployment (GitHub Pages)](#-deployment-github-pages)
 - [Screenshots](#️-screenshots)
 - [Live Demo](#-live-demo)
 - [Future Improvements](#-future-improvements)
@@ -266,20 +265,6 @@ ng test
 ```
 
 Tests are executed via [Karma](https://karma-runner.github.io) and [Jasmine](https://jasmine.github.io).
-
----
-
-## 🌍 Deployment (GitHub Pages)
-
-To deploy your Angular app to GitHub Pages:
-
-```bash
-ng build --configuration production --base-href "https://Yael-Karat.github.io/biks-trainee-dashboard/"
-npx angular-cli-ghpages --dir=dist/biks-trainee-dashboard
-```
-
-Then visit your live demo at:
-👉 **[https://Yael-Karat.github.io/biks-trainee-dashboard](https://Yael-Karat.github.io/biks-trainee-dashboard)**
 
 ---
 
