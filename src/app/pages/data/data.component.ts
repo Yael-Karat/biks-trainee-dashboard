@@ -87,7 +87,7 @@ export class DataComponent implements OnInit, AfterViewInit {
       return filters.every(f => {
         if (!f) return true;
 
-        // Column-specific filter: e.g. grade:>80, date:<2024-01-01, name:yael
+        // Column-specific filter: e.g. grade:>80, date:<2024-01-01, name:yael, email:@gmail
         const colMatch = f.match(/^(\w+):\s*([><=]?)(.+)$/);
         if (colMatch) {
           const col = colMatch[1];
@@ -109,8 +109,8 @@ export class DataComponent implements OnInit, AfterViewInit {
             }
           }
 
-          // Date column
-          if (col === 'date') {
+          // Date columns (date and dateJoined)
+          if (col === 'date' || col === 'dateJoined') {
             const parsedDate = parseDateSafe(rawValue);
             const traineeDate = parseDateSafe(value);
             if (!parsedDate || !traineeDate) return true;
@@ -123,7 +123,7 @@ export class DataComponent implements OnInit, AfterViewInit {
             }
           }
 
-          // Text columns (id, name, subject, etc.)
+          // Text columns (id, name, subject, email, address, city, country, zip)
           const left = String(value).toLowerCase();
           const right = rawValue.toLowerCase();
           return left.includes(right);
@@ -161,9 +161,11 @@ export class DataComponent implements OnInit, AfterViewInit {
           }
         }
 
-        // Default global text search
+        // Default global text search (now includes optional fields)
         const term = f.toLowerCase();
-        return Object.values(data).some(v => String(v).toLowerCase().includes(term));
+        return Object.values(data).some(v => 
+          v != null && String(v).toLowerCase().includes(term)
+        );
       });
     };
 
@@ -195,12 +197,26 @@ export class DataComponent implements OnInit, AfterViewInit {
   }
 
   createEmptyTrainee(): Trainee {
-    return { id: 0, name: '', date: '', grade: 0, subject: '' };
+    return { 
+      id: 0, 
+      name: '', 
+      date: '', 
+      grade: 0, 
+      subject: '',
+      // Optional fields initialized as empty strings
+      email: '',
+      dateJoined: '',
+      address: '',
+      city: '',
+      country: '',
+      zip: ''
+    };
   }
 
   addTrainee(): void {
     const dialogRef = this.dialog.open(TraineeDetailsDialogComponent, {
-      width: '400px',
+      width: '500px',
+      maxHeight: '90vh',
       data: { trainee: this.createEmptyTrainee(), isNew: true }
     });
 
@@ -214,7 +230,8 @@ export class DataComponent implements OnInit, AfterViewInit {
 
   selectTrainee(row: Trainee): void {
     const dialogRef = this.dialog.open(TraineeDetailsDialogComponent, {
-      width: '400px',
+      width: '500px',
+      maxHeight: '90vh',
       data: { trainee: { ...row }, isNew: false }
     });
 

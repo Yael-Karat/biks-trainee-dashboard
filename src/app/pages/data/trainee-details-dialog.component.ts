@@ -12,7 +12,8 @@ import { IsraeliIdValidatorDirective } from '../../validators/israeli-id.directi
 @Component({ 
   selector: 'app-trainee-details-dialog', 
   standalone: true, 
-  templateUrl: './trainee-details-dialog.component.html', 
+  templateUrl: './trainee-details-dialog.component.html',
+  styleUrls: ['./trainee-details-dialog.component.scss'],
   imports: [ 
     FormsModule, 
     MatFormFieldModule, 
@@ -45,6 +46,14 @@ export class TraineeDetailsDialogComponent {
 
     // Clamp grade between 0 and 100
     this.trainee.grade = Math.min(Math.max(this.trainee.grade, 0), 100);
+
+    // Clean up optional fields - convert empty strings to undefined
+    if (!this.trainee.email?.trim()) this.trainee.email = undefined;
+    if (!this.trainee.dateJoined?.trim()) this.trainee.dateJoined = undefined;
+    if (!this.trainee.address?.trim()) this.trainee.address = undefined;
+    if (!this.trainee.city?.trim()) this.trainee.city = undefined;
+    if (!this.trainee.country?.trim()) this.trainee.country = undefined;
+    if (!this.trainee.zip?.trim()) this.trainee.zip = undefined;
 
     // Close dialog with the trainee object (caller decides add/update)
     this.dialogRef.close(this.trainee);
